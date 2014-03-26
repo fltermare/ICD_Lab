@@ -1,0 +1,17 @@
+1: // pattern name: integer
+2: 
+<integer: 123>
+3: 123
+<integer: 456>
+4: 456
+<integer: 789>
+5: 789
+<oct_integer: 0123>
+6:  0123		
+7: 
+<oct_integer: 00123>
+8: 00123               
+9: 
+<oct_integer: 01234567>
+<integer: 89>
+10: 0123456789

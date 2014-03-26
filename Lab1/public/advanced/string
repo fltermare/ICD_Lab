@@ -1,0 +1,11 @@
+// pattern name: string
+
+print "aaaaaaa";
+
+print "aaaaaaa""bbbbbbb"; // aaaaaaa"bbbbbbb
+
+"aaaaa" "bbbbb"
+
+"line1\t\n	line2 line3"
+
+string str := " array begin end ; / \ <> 0aa a00 ";

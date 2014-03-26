@@ -1,0 +1,26 @@
+// pattern name: general_2
+
+/*
+ *	A P language example
+ */
+general2;
+//&T-
+//&S-
+var a: integer;		// global variable
+
+foo( a, b: integer ): integer;
+begin
+	return a*b;
+end
+end foo
+
+//&T+
+//&S+
+// main block
+begin
+
+	print foo(2,3);
+
+end
+end general2
+

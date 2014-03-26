@@ -1,0 +1,9 @@
+1: // pattern name: general_1
+2: 
+3: //  print  hello  world
+<KWbegin>
+4: begin
+5: //&T-
+6: 	var a : integer;
+7: 	var b : real;
+8: 	print "hello  world";

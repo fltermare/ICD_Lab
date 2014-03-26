@@ -1,0 +1,25 @@
+1: // pattern name: string
+2: 
+<KWprint>
+<string: aaaaaaa>
+<;>
+3: print "aaaaaaa";
+4: 
+<KWprint>
+<string: aaaaaaa"bbbbbbb>
+<;>
+5: print "aaaaaaa""bbbbbbb"; // aaaaaaa"bbbbbbb
+6: 
+<string: aaaaa>
+<string: bbbbb>
+7: "aaaaa" "bbbbb"
+8: 
+<string: line1\t\n	line2 line3>
+9: "line1\t\n	line2 line3"
+10: 
+<KWstring>
+<id: str>
+<:=>
+<string:  array begin end ; / \ <> 0aa a00 >
+<;>
+11: string str := " array begin end ; / \ <> 0aa a00 ";

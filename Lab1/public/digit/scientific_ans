@@ -1,0 +1,19 @@
+1: // pattern name: scientific
+2: 
+<scientific: 369E2>
+3: 369E2
+4: 
+<scientific: 125e2>
+5: 125e2
+6: 
+<scientific: 123E+4>
+7: 123E+4
+8: 
+<scientific: 135E-6>
+9: 135E-6
+10: 
+<scientific: 147E0>
+11: 147E0
+12: 
+<scientific: 123e01>
+13: 123e01

@@ -1,0 +1,30 @@
+1: // pattern name: general_2
+2: 
+3: /*
+4:  *	A P language example
+5:  */
+<id: general2>
+<;>
+6: general2;
+7: //&T-
+18: //&S+
+19: // main block
+<KWbegin>
+20: begin
+21: 
+<KWprint>
+<id: foo>
+<(>
+<integer: 2>
+<,>
+<integer: 3>
+<)>
+<;>
+22: 	print foo(2,3);
+23: 
+<KWend>
+24: end
+<KWend>
+<id: general2>
+25: end general2
+26: 
