@@ -3,4 +3,5 @@
 *.sh
 diff_result
 00*
-
+*.pdf
+*.doc
