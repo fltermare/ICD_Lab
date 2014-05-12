@@ -7,6 +7,7 @@
 
 #include <string.h>
 #include "y.tab.h"
+
 #define LIST strcat( buf, yytext )
 #define token(t) { LIST; if (Opt_T) printf("<%s>\n", #t );}
 #define tokenChar(t) { LIST; if (Opt_T) printf("<%c>\n", t );}
@@ -56,12 +57,12 @@ identifier ({letter})({letter}|{digit})*
 "+"                 { tokenChar('+'); return ADD;}
 "-"                 { tokenChar('-'); return SUB;}
 "*"                 { tokenChar('*'); return MUL;}
-"/"                 { tokenChar('/'); return DIV}
+"/"                 { tokenChar('/'); return DIV;}
 "mod"               { token(mod); return MOD;}
 ":="                { token(:=);  return ASSIGN;}
 "<"                 { tokenChar('<'); return GT;}
 "<="                { token(<=); return GE;}
-"<>"                { token(<>); return GL;}
+"<>"                { token(<>); return NE;}
 ">="                { token(>=); return LE;}
 ">"                 { tokenChar('>'); return LT;}
 "="                 { tokenChar('='); return EQ;}
@@ -100,12 +101,14 @@ identifier ({letter})({letter}|{digit})*
 
 "\""                { /* begin string  */
                         LIST;
-                        BEGIN STR; 
+                        BEGIN STR;
+                        return BS;
                     }
 
 <STR>([^"\n])*      {
                         LIST;
                         strcat( strContent, yytext );
+                        return BSS;
                     }
 
 <STR>"\""           { /* end of string or "" */
@@ -125,6 +128,7 @@ identifier ({letter})({letter}|{digit})*
                             printf("<%s: %s>\n", "string", strContent );
                             memset( strContent, 0, MAX_LINE_LENG );	// clear strContent
                             BEGIN INITIAL;
+                            return BSSS;
                         }
                     }
 <STR>"\n"           {
@@ -193,7 +197,7 @@ identifier ({letter})({letter}|{digit})*
                     }
 
 %%
-int  main( int argc, char **argv )
+/*int  main( int argc, char **argv )
 {
     if( argc != 2 ) {
         fprintf(  stdout,  "Usage:  ./scanner  [filename]\n"  );
@@ -210,7 +214,7 @@ int  main( int argc, char **argv )
     yyin = fp;
     yylex();
     exit(0);
-}
+}*/
 
 void setPseudoComment( const char *text )
 {

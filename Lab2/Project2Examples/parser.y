@@ -8,9 +8,7 @@ extern char *yytext;            /* declared by lex */
 extern char buf[256];           /* declared in lex.l */
 %}
 
-%token ',' ';' ':' '(' ')' '[' ']' ADD SUB MUL DIV MOD ASSIGN GT GE GL LE LT EQ AND OR NOT ARRAY BEG BOOLEAN DEF
-DO ELSE END FALSE FOR INTEGER IF OF PRINT READ REAL STRING THEN TO TRUE RETURE VAR WHILE
-BS BSS BSSS DEF
+%token ',' ';' ':' '(' ')' '[' ']' ADD SUB MUL DIV MOD ASSIGN GT GE NE LE LT EQ AND OR NOT ARRAY BEG BOOLEAN DEF DO ELSE END FALSE FOR INTEGER IF OF PRINT READ REAL THEN TO TRUE VAR WHILE OCT ID INT FLOAT SCI RETURN BS BSS BSSS STRING
 
 %%
 
@@ -18,12 +16,11 @@ program		: ID ';' programbody END ID
             ;
 
 
-programbody	: var_d func_d compound_state
+programbody	: var_d function compound_state
             ;
 
 
 var_d		: VAR id_list ':' scalar_type ';' var_d
-            | VAR id_list ':' ARRAY INT TO INT OF scalar_type ';' var_d
             | VAR id_list ':' literal_constant ';' var_d
             |
             ;
@@ -36,47 +33,72 @@ scalar_type	: INTEGER
             | REAL
             | STRING
             | BOOLEAN
+            | ARRAY INT TO INT OF scalar_type
             ;
 
 literal_constant    : INT
                     | OCT
                     | SCI
                     | FLOAT
-                    | STRING
+                    | str
                     | FALSE
                     | TRUE
                     ;
-
-func_d      : ID '(' func ')' ':' scalar_type ';' compound_state END ID func_d
-            | 
+function    : func_d function
+            | func_p function
+            |
             ;
-        
-compound_state  : BEGI var_d state EN
-                |
-                ;
 
-state   : ID ASSIGN expr ';' state
-        | ID ';' state BEGI state EN EN ID
-    //  | IF boolean_expr THEN state ELSE state EN IF state
-        | IF boolean_expr THEN state EN IF state
-        | WHILE boolean_expr DO state EN DO state
-        | FOR ID ASSIGN INT TO INT DO state EN DO state
-        | RETURN expr ';'
-        | ID '(' func ')' scalar_type ';' state
-        | ID '(' func ')' ';' state
-        | compound_state
-        | PRINT str ';'  state
-        | PRINT expr ';' state
-        | PRINT ID ';' state
-        | READ str ';' state
-        | READ expr ';' state
-        | READ ID ';' state
-        | var_d state state
-        |
+func_d      : ID '(' func ')' ':' scalar_type ';' compound_state END ID
+            ;
+
+func_p      : ID '(' func ')' ';' compound_state END ID
+            | ID '(' func ')' ';'
+            ;
+
+state   : compound_state state 
+        | simple_state state
+        | conditional_state state
+        | while_state state
+        | for_state state
+        | return_state state
+        | func_invocation state
+        | 
         ;
 
-func    : ID_list ':' scalar_type ';' func
-        | ID_list ':' scalar_type
+func_invocation     : ID '(' func ')' ';' 
+                    ;
+
+compound_state      : BEG var_d state END
+                    ;
+
+simple_state        : ID ASSIGN boolean_expr ';'
+                    | expr ASSIGN boolean_expr ';' 
+                    | PRINT ID ';'
+                    | PRINT expr ';'
+                    | PRINT str ';'
+                    | READ ID ';'
+                    | READ expr ';'
+                    | READ str ';'
+                    ;
+
+conditional_state   : IF boolean_expr THEN state END IF 
+                    | IF boolean_expr THEN state ELSE state END IF
+                    ;
+ 
+while_state         : WHILE boolean_expr DO state END DO
+                    ;
+                    
+for_state           : FOR ID ASSIGN INT TO INT DO state END DO
+                    ;
+
+return_state        : RETURN boolean_expr ';'
+                    ;
+
+
+func    : id_list ':' scalar_type ';' func
+        | id_list ':' scalar_type
+        | expr 
         |
         ;
 
@@ -94,28 +116,50 @@ control : ADD
         ;
 
 expr    : SUB num
+        | SUB expr
+        | NOT expr
         | expr control expr
-        | '(' expr ')' control '(' expr ')'
-        | '(' expr ')' control num
-        | expr control '(' expr ')'
+//        | '(' expr ')' control '(' expr ')'
+//        | '(' expr ')' control num
+//        | expr control '(' expr ')'
+        | '(' expr ')'
         | num
         | ID
-        | ID '(' expr_f ')' 
+        | ID '(' expr_f ')'
+        | ID bracket
+        | TRUE
+        | FALSE
+        ;
+
+bracket : '[' expr ']' bracket;
+        |
         ;
 
 expr_f  : expr ',' expr_f
         | expr
         ;
 
-boolean_expr	: expr GT expr
-                | expr LT expr
-                | expr EQ expr
-                | expr GE expr
-                | expr LE expr
-                | expr GL expr
-                | expr AND expr
-                | expr OR expr
-                | NOT expr
+boolean_expr	: '(' boolean_expr ')'
+                | expr GT expr boolean_expr2
+                | expr LT expr boolean_expr2
+                | expr EQ expr boolean_expr2
+                | expr GE expr boolean_expr2
+                | expr LE expr boolean_expr2
+                | expr NE expr boolean_expr2  
+                | expr AND expr boolean_expr2
+                | expr OR expr boolean_expr2
+                | expr
+                ;
+
+boolean_expr2   : GT expr boolean_expr2
+                | LT expr boolean_expr2
+                | EQ expr boolean_expr2
+                | GE expr boolean_expr2
+                | LE expr boolean_expr2 
+                | NE expr boolean_expr2 
+                | AND expr boolean_expr2 
+                | OR expr boolean_expr2
+                |
                 ;
 
 str	    : BS str_c BSSS
@@ -124,7 +168,11 @@ str	    : BS str_c BSSS
 str_c   : BSS str_c
         | BSS
         ;
-
+/*
+str     : BS BSS BSSS str
+        |
+        ;
+*/
 %%
 
 int yyerror( char *msg )
