@@ -3,17 +3,23 @@ Terminals unused in grammar
    DEF
 
 
-State 45 conflicts: 1 shift/reduce, 7 reduce/reduce
-State 59 conflicts: 20 reduce/reduce
-State 61 conflicts: 20 reduce/reduce
+State 44 conflicts: 1 shift/reduce, 7 reduce/reduce
+State 60 conflicts: 20 reduce/reduce
 State 62 conflicts: 5 shift/reduce
-State 63 conflicts: 5 shift/reduce
 State 80 conflicts: 1 shift/reduce, 6 reduce/reduce
 State 103 conflicts: 5 shift/reduce
-State 108 conflicts: 1 shift/reduce, 6 reduce/reduce
-State 111 conflicts: 1 shift/reduce, 6 reduce/reduce
-State 135 conflicts: 1 shift/reduce
-State 154 conflicts: 1 reduce/reduce
+State 109 conflicts: 1 shift/reduce, 6 reduce/reduce
+State 112 conflicts: 1 shift/reduce, 6 reduce/reduce
+State 134 conflicts: 1 shift/reduce
+State 136 conflicts: 8 shift/reduce
+State 164 conflicts: 8 shift/reduce
+State 165 conflicts: 8 shift/reduce
+State 166 conflicts: 8 shift/reduce
+State 167 conflicts: 8 shift/reduce
+State 168 conflicts: 8 shift/reduce
+State 169 conflicts: 8 shift/reduce
+State 170 conflicts: 8 shift/reduce
+State 171 conflicts: 8 shift/reduce
 
 
 Grammar
@@ -59,15 +65,15 @@ Grammar
    28      | while_state state
    29      | for_state state
    30      | return_state state
-   31      | func_invocation state
+   31      | func_invocation ';' state
    32      | %empty
 
-   33 func_invocation: ID '(' func ')' ';'
+   33 func_invocation: ID '(' func ')'
 
    34 compound_state: BEG var_d state END
 
    35 simple_state: ID ASSIGN boolean_expr ';'
-   36             | expr ASSIGN boolean_expr ';'
+   36             | expr ASSIGN expr ';'
    37             | PRINT ID ';'
    38             | PRINT expr ';'
    39             | PRINT str ';'
@@ -86,7 +92,7 @@ Grammar
 
    48 func: id_list ':' scalar_type ';' func
    49     | id_list ':' scalar_type
-   50     | expr
+   50     | expr_f
    51     | %empty
 
    52 num: INT
@@ -100,77 +106,66 @@ Grammar
    59        | DIV
    60        | MOD
 
-   61 expr: SUB num
-   62     | SUB expr
-   63     | NOT expr
-   64     | expr control expr
-   65     | '(' expr ')'
-   66     | num
-   67     | ID
-   68     | ID '(' expr_f ')'
-   69     | ID bracket
-   70     | TRUE
-   71     | FALSE
+   61 expr: SUB expr
+   62     | expr control expr
+   63     | '(' expr ')'
+   64     | num
+   65     | ID
+   66     | func_invocation
+   67     | ID bracket
+   68     | TRUE
+   69     | FALSE
 
-   72 bracket: '[' expr ']' bracket
-   73        | %empty
+   70 bracket: '[' expr ']' bracket
+   71        | %empty
 
-   74 expr_f: expr ',' expr_f
-   75       | expr
+   72 expr_f: expr ',' expr_f
+   73       | expr
 
-   76 boolean_expr: '(' boolean_expr ')'
-   77             | expr GT expr boolean_expr2
-   78             | expr LT expr boolean_expr2
-   79             | expr EQ expr boolean_expr2
-   80             | expr GE expr boolean_expr2
-   81             | expr LE expr boolean_expr2
-   82             | expr NE expr boolean_expr2
-   83             | expr AND expr boolean_expr2
-   84             | expr OR expr boolean_expr2
-   85             | expr
+   74 boolean_expr: '(' boolean_expr ')'
+   75             | boolean_expr GT boolean_expr
+   76             | boolean_expr LT boolean_expr
+   77             | boolean_expr EQ boolean_expr
+   78             | boolean_expr GE boolean_expr
+   79             | boolean_expr LE boolean_expr
+   80             | boolean_expr NE boolean_expr
+   81             | boolean_expr AND boolean_expr
+   82             | boolean_expr OR boolean_expr
+   83             | NOT boolean_expr
+   84             | expr
 
-   86 boolean_expr2: GT expr boolean_expr2
-   87              | LT expr boolean_expr2
-   88              | EQ expr boolean_expr2
-   89              | GE expr boolean_expr2
-   90              | LE expr boolean_expr2
-   91              | NE expr boolean_expr2
-   92              | AND expr boolean_expr2
-   93              | OR expr boolean_expr2
-   94              | %empty
+   85 str: BS str_c BSSS
 
-   95 str: BS str_c BSSS
-
-   96 str_c: BSS str_c
-   97      | BSS
+   86 str_c: BSS str_c
+   87      | BSS
 
 
 Terminals, with rules where they appear
 
 $end (0) 0
-'(' (40) 23 24 33 65 68 76
-')' (41) 23 24 33 65 68 76
-',' (44) 6 74
+'(' (40) 23 24 33 63 74
+')' (41) 23 24 33 63 74
+',' (44) 6 72
 ':' (58) 3 4 23 48 49
-';' (59) 1 3 4 23 24 33 35 36 37 38 39 40 41 42 47 48
-'[' (91) 72
-']' (93) 72
+';' (59) 1 3 4 23 24 31 35 36 37 38 39 40 41 42 47 48
+'[' (91) 70
+']' (93) 70
 error (256)
 ADD (258) 56
-SUB (259) 57 61 62
+SUB (259) 57 61
 MUL (260) 58
 DIV (261) 59
 MOD (262) 60
 ASSIGN (263) 35 36 46
-GT (264) 77 86
-GE (265) 80 89
-NE (266) 82 91
-LE (267) 81 90
-LT (268) 78 87
-EQ (269) 79 88
-AND (270) 83 92
-OR (271) 84 93
-NOT (272) 63
+GT (264) 75
+GE (265) 78
+NE (266) 80
+LE (267) 79
+LT (268) 76
+EQ (269) 77
+AND (270) 81
+OR (271) 82
+NOT (272) 83
 ARRAY (273) 12
 BEG (274) 34
 BOOLEAN (275) 11
@@ -178,7 +173,7 @@ DEF (276)
 DO (277) 45 46
 ELSE (278) 44
 END (279) 1 23 24 34 43 44 45 46
-FALSE (280) 18 71
+FALSE (280) 18 69
 FOR (281) 46
 INTEGER (282) 8
 IF (283) 43 44
@@ -188,18 +183,18 @@ READ (286) 40 41 42
 REAL (287) 9
 THEN (288) 43 44
 TO (289) 12 46
-TRUE (290) 19 70
+TRUE (290) 19 68
 VAR (291) 3 4
 WHILE (292) 45
 OCT (293) 14 53
-ID (294) 1 6 7 23 24 33 35 37 40 46 67 68 69
+ID (294) 1 6 7 23 24 33 35 37 40 46 65 67
 INT (295) 12 13 46 52
 FLOAT (296) 16 55
 SCI (297) 15 54
 RETURN (298) 47
-BS (299) 95
-BSS (300) 96 97
-BSSS (301) 95
+BS (299) 85
+BSS (300) 86 87
+BSSS (301) 85
 STRING (302) 10
 
 
@@ -229,7 +224,7 @@ state (65)
     on left: 25 26 27 28 29 30 31 32, on right: 25 26 27 28 29 30 31
     34 43 44 45 46
 func_invocation (66)
-    on left: 33, on right: 31
+    on left: 33, on right: 31 66
 compound_state (67)
     on left: 34, on right: 2 23 24 25
 simple_state (68)
@@ -245,27 +240,23 @@ return_state (72)
 func (73)
     on left: 48 49 50 51, on right: 23 24 33 48
 num (74)
-    on left: 52 53 54 55, on right: 61 66
+    on left: 52 53 54 55, on right: 64
 control (75)
-    on left: 56 57 58 59 60, on right: 64
+    on left: 56 57 58 59 60, on right: 62
 expr (76)
-    on left: 61 62 63 64 65 66 67 68 69 70 71, on right: 36 38 41 50
-    62 63 64 65 72 74 75 77 78 79 80 81 82 83 84 85 86 87 88 89 90
-    91 92 93
+    on left: 61 62 63 64 65 66 67 68 69, on right: 36 38 41 61 62 63
+    70 72 73 84
 bracket (77)
-    on left: 72 73, on right: 69 72
+    on left: 70 71, on right: 67 70
 expr_f (78)
-    on left: 74 75, on right: 68 74
+    on left: 72 73, on right: 50 72
 boolean_expr (79)
-    on left: 76 77 78 79 80 81 82 83 84 85, on right: 35 36 43 44 45
-    47 76
-boolean_expr2 (80)
-    on left: 86 87 88 89 90 91 92 93 94, on right: 77 78 79 80 81 82
-    83 84 86 87 88 89 90 91 92 93
-str (81)
-    on left: 95, on right: 17 39 42
-str_c (82)
-    on left: 96 97, on right: 95 96
+    on left: 74 75 76 77 78 79 80 81 82 83 84, on right: 35 43 44 45
+    47 74 75 76 77 78 79 80 81 82 83
+str (80)
+    on left: 85, on right: 17 39 42
+str_c (81)
+    on left: 86 87, on right: 85 86
 
 
 State 0
@@ -454,21 +445,22 @@ State 18
 
     '('    shift, and go to state 39
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 45
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 44
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
     $default  reduce using rule 51 (func)
 
-    id_list  go to state 49
-    func     go to state 50
-    num      go to state 51
-    expr     go to state 52
+    id_list          go to state 48
+    func_invocation  go to state 49
+    func             go to state 50
+    num              go to state 51
+    expr             go to state 52
+    expr_f           go to state 53
 
 
 State 19
@@ -479,7 +471,7 @@ State 19
 
     $default  reduce using rule 5 (var_d)
 
-    var_d  go to state 53
+    var_d  go to state 54
 
 
 State 20
@@ -514,7 +506,7 @@ State 24
 
    12 scalar_type: ARRAY . INT TO INT OF scalar_type
 
-    INT  shift, and go to state 54
+    INT  shift, and go to state 55
 
 
 State 25
@@ -582,11 +574,11 @@ State 33
 
 State 34
 
-   95 str: BS . str_c BSSS
+   85 str: BS . str_c BSSS
 
-    BSS  shift, and go to state 55
+    BSS  shift, and go to state 56
 
-    str_c  go to state 56
+    str_c  go to state 57
 
 
 State 35
@@ -600,14 +592,14 @@ State 36
 
     3 var_d: VAR id_list ':' scalar_type . ';' var_d
 
-    ';'  shift, and go to state 57
+    ';'  shift, and go to state 58
 
 
 State 37
 
     4 var_d: VAR id_list ':' literal_constant . ';' var_d
 
-    ';'  shift, and go to state 58
+    ';'  shift, and go to state 59
 
 
 State 38
@@ -619,142 +611,129 @@ State 38
 
 State 39
 
-   65 expr: '(' . expr ')'
+   63 expr: '(' . expr ')'
 
     '('    shift, and go to state 39
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num   go to state 51
-    expr  go to state 60
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 61
 
 
 State 40
 
-   61 expr: SUB . num
-   62     | SUB . expr
+   61 expr: SUB . expr
 
     '('    shift, and go to state 39
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num   go to state 61
-    expr  go to state 62
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 62
 
 
 State 41
 
-   63 expr: NOT . expr
+   69 expr: FALSE .
 
-    '('    shift, and go to state 39
-    SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
-
-    num   go to state 51
-    expr  go to state 63
+    $default  reduce using rule 69 (expr)
 
 
 State 42
 
-   71 expr: FALSE .
+   68 expr: TRUE .
 
-    $default  reduce using rule 71 (expr)
+    $default  reduce using rule 68 (expr)
 
 
 State 43
-
-   70 expr: TRUE .
-
-    $default  reduce using rule 70 (expr)
-
-
-State 44
 
    53 num: OCT .
 
     $default  reduce using rule 53 (num)
 
 
-State 45
+State 44
 
     6 id_list: ID . ',' id_list
     7        | ID .
-   67 expr: ID .
-   68     | ID . '(' expr_f ')'
-   69     | ID . bracket
+   33 func_invocation: ID . '(' func ')'
+   65 expr: ID .
+   67     | ID . bracket
 
     ','  shift, and go to state 15
-    '('  shift, and go to state 64
-    '['  shift, and go to state 65
+    '('  shift, and go to state 63
+    '['  shift, and go to state 64
 
-    ','       [reduce using rule 67 (expr)]
-    ','       [reduce using rule 73 (bracket)]
+    ','       [reduce using rule 65 (expr)]
+    ','       [reduce using rule 71 (bracket)]
     ':'       reduce using rule 7 (id_list)
-    ')'       reduce using rule 67 (expr)
-    ')'       [reduce using rule 73 (bracket)]
-    ADD       reduce using rule 67 (expr)
-    ADD       [reduce using rule 73 (bracket)]
-    SUB       reduce using rule 67 (expr)
-    SUB       [reduce using rule 73 (bracket)]
-    MUL       reduce using rule 67 (expr)
-    MUL       [reduce using rule 73 (bracket)]
-    DIV       reduce using rule 67 (expr)
-    DIV       [reduce using rule 73 (bracket)]
-    MOD       reduce using rule 67 (expr)
-    MOD       [reduce using rule 73 (bracket)]
-    $default  reduce using rule 67 (expr)
+    ')'       reduce using rule 65 (expr)
+    ')'       [reduce using rule 71 (bracket)]
+    ADD       reduce using rule 65 (expr)
+    ADD       [reduce using rule 71 (bracket)]
+    SUB       reduce using rule 65 (expr)
+    SUB       [reduce using rule 71 (bracket)]
+    MUL       reduce using rule 65 (expr)
+    MUL       [reduce using rule 71 (bracket)]
+    DIV       reduce using rule 65 (expr)
+    DIV       [reduce using rule 71 (bracket)]
+    MOD       reduce using rule 65 (expr)
+    MOD       [reduce using rule 71 (bracket)]
+    $default  reduce using rule 65 (expr)
 
-    bracket  go to state 66
+    bracket  go to state 65
 
 
-State 46
+State 45
 
    52 num: INT .
 
     $default  reduce using rule 52 (num)
 
 
-State 47
+State 46
 
    55 num: FLOAT .
 
     $default  reduce using rule 55 (num)
 
 
-State 48
+State 47
 
    54 num: SCI .
 
     $default  reduce using rule 54 (num)
 
 
-State 49
+State 48
 
    48 func: id_list . ':' scalar_type ';' func
    49     | id_list . ':' scalar_type
 
-    ':'  shift, and go to state 67
+    ':'  shift, and go to state 66
+
+
+State 49
+
+   66 expr: func_invocation .
+
+    $default  reduce using rule 66 (expr)
 
 
 State 50
@@ -762,52 +741,60 @@ State 50
    23 func_d: ID '(' func . ')' ':' scalar_type ';' compound_state END ID
    24 func_p: ID '(' func . ')' ';' compound_state END ID
 
-    ')'  shift, and go to state 68
+    ')'  shift, and go to state 67
 
 
 State 51
 
-   66 expr: num .
+   64 expr: num .
 
-    $default  reduce using rule 66 (expr)
+    $default  reduce using rule 64 (expr)
 
 
 State 52
 
-   50 func: expr .
-   64 expr: expr . control expr
+   62 expr: expr . control expr
+   72 expr_f: expr . ',' expr_f
+   73       | expr .
 
+    ','  shift, and go to state 68
     ADD  shift, and go to state 69
     SUB  shift, and go to state 70
     MUL  shift, and go to state 71
     DIV  shift, and go to state 72
     MOD  shift, and go to state 73
 
-    $default  reduce using rule 50 (func)
+    $default  reduce using rule 73 (expr_f)
 
     control  go to state 74
 
 
 State 53
 
+   50 func: expr_f .
+
+    $default  reduce using rule 50 (func)
+
+
+State 54
+
    34 compound_state: BEG var_d . state END
 
     '('     shift, and go to state 39
     SUB     shift, and go to state 40
-    NOT     shift, and go to state 41
     BEG     shift, and go to state 19
-    FALSE   shift, and go to state 42
+    FALSE   shift, and go to state 41
     FOR     shift, and go to state 75
     IF      shift, and go to state 76
     PRINT   shift, and go to state 77
     READ    shift, and go to state 78
-    TRUE    shift, and go to state 43
+    TRUE    shift, and go to state 42
     WHILE   shift, and go to state 79
-    OCT     shift, and go to state 44
+    OCT     shift, and go to state 43
     ID      shift, and go to state 80
-    INT     shift, and go to state 46
-    FLOAT   shift, and go to state 47
-    SCI     shift, and go to state 48
+    INT     shift, and go to state 45
+    FLOAT   shift, and go to state 46
+    SCI     shift, and go to state 47
     RETURN  shift, and go to state 81
 
     $default  reduce using rule 32 (state)
@@ -824,33 +811,33 @@ State 53
     expr               go to state 90
 
 
-State 54
+State 55
 
    12 scalar_type: ARRAY INT . TO INT OF scalar_type
 
     TO  shift, and go to state 91
 
 
-State 55
+State 56
 
-   96 str_c: BSS . str_c
-   97      | BSS .
+   86 str_c: BSS . str_c
+   87      | BSS .
 
-    BSS  shift, and go to state 55
+    BSS  shift, and go to state 56
 
-    $default  reduce using rule 97 (str_c)
+    $default  reduce using rule 87 (str_c)
 
     str_c  go to state 92
 
 
-State 56
+State 57
 
-   95 str: BS str_c . BSSS
+   85 str: BS str_c . BSSS
 
     BSSS  shift, and go to state 93
 
 
-State 57
+State 58
 
     3 var_d: VAR id_list ':' scalar_type ';' . var_d
 
@@ -861,7 +848,7 @@ State 57
     var_d  go to state 94
 
 
-State 58
+State 59
 
     4 var_d: VAR id_list ':' literal_constant ';' . var_d
 
@@ -872,64 +859,64 @@ State 58
     var_d  go to state 95
 
 
-State 59
-
-   67 expr: ID .
-   68     | ID . '(' expr_f ')'
-   69     | ID . bracket
-
-    '('  shift, and go to state 64
-    '['  shift, and go to state 65
-
-    ','       reduce using rule 67 (expr)
-    ','       [reduce using rule 73 (bracket)]
-    ';'       reduce using rule 67 (expr)
-    ';'       [reduce using rule 73 (bracket)]
-    ')'       reduce using rule 67 (expr)
-    ')'       [reduce using rule 73 (bracket)]
-    ']'       reduce using rule 67 (expr)
-    ']'       [reduce using rule 73 (bracket)]
-    ADD       reduce using rule 67 (expr)
-    ADD       [reduce using rule 73 (bracket)]
-    SUB       reduce using rule 67 (expr)
-    SUB       [reduce using rule 73 (bracket)]
-    MUL       reduce using rule 67 (expr)
-    MUL       [reduce using rule 73 (bracket)]
-    DIV       reduce using rule 67 (expr)
-    DIV       [reduce using rule 73 (bracket)]
-    MOD       reduce using rule 67 (expr)
-    MOD       [reduce using rule 73 (bracket)]
-    ASSIGN    reduce using rule 67 (expr)
-    ASSIGN    [reduce using rule 73 (bracket)]
-    GT        reduce using rule 67 (expr)
-    GT        [reduce using rule 73 (bracket)]
-    GE        reduce using rule 67 (expr)
-    GE        [reduce using rule 73 (bracket)]
-    NE        reduce using rule 67 (expr)
-    NE        [reduce using rule 73 (bracket)]
-    LE        reduce using rule 67 (expr)
-    LE        [reduce using rule 73 (bracket)]
-    LT        reduce using rule 67 (expr)
-    LT        [reduce using rule 73 (bracket)]
-    EQ        reduce using rule 67 (expr)
-    EQ        [reduce using rule 73 (bracket)]
-    AND       reduce using rule 67 (expr)
-    AND       [reduce using rule 73 (bracket)]
-    OR        reduce using rule 67 (expr)
-    OR        [reduce using rule 73 (bracket)]
-    DO        reduce using rule 67 (expr)
-    DO        [reduce using rule 73 (bracket)]
-    THEN      reduce using rule 67 (expr)
-    THEN      [reduce using rule 73 (bracket)]
-    $default  reduce using rule 67 (expr)
-
-    bracket  go to state 66
-
-
 State 60
 
-   64 expr: expr . control expr
-   65     | '(' expr . ')'
+   33 func_invocation: ID . '(' func ')'
+   65 expr: ID .
+   67     | ID . bracket
+
+    '('  shift, and go to state 63
+    '['  shift, and go to state 64
+
+    ','       reduce using rule 65 (expr)
+    ','       [reduce using rule 71 (bracket)]
+    ';'       reduce using rule 65 (expr)
+    ';'       [reduce using rule 71 (bracket)]
+    ')'       reduce using rule 65 (expr)
+    ')'       [reduce using rule 71 (bracket)]
+    ']'       reduce using rule 65 (expr)
+    ']'       [reduce using rule 71 (bracket)]
+    ADD       reduce using rule 65 (expr)
+    ADD       [reduce using rule 71 (bracket)]
+    SUB       reduce using rule 65 (expr)
+    SUB       [reduce using rule 71 (bracket)]
+    MUL       reduce using rule 65 (expr)
+    MUL       [reduce using rule 71 (bracket)]
+    DIV       reduce using rule 65 (expr)
+    DIV       [reduce using rule 71 (bracket)]
+    MOD       reduce using rule 65 (expr)
+    MOD       [reduce using rule 71 (bracket)]
+    ASSIGN    reduce using rule 65 (expr)
+    ASSIGN    [reduce using rule 71 (bracket)]
+    GT        reduce using rule 65 (expr)
+    GT        [reduce using rule 71 (bracket)]
+    GE        reduce using rule 65 (expr)
+    GE        [reduce using rule 71 (bracket)]
+    NE        reduce using rule 65 (expr)
+    NE        [reduce using rule 71 (bracket)]
+    LE        reduce using rule 65 (expr)
+    LE        [reduce using rule 71 (bracket)]
+    LT        reduce using rule 65 (expr)
+    LT        [reduce using rule 71 (bracket)]
+    EQ        reduce using rule 65 (expr)
+    EQ        [reduce using rule 71 (bracket)]
+    AND       reduce using rule 65 (expr)
+    AND       [reduce using rule 71 (bracket)]
+    OR        reduce using rule 65 (expr)
+    OR        [reduce using rule 71 (bracket)]
+    DO        reduce using rule 65 (expr)
+    DO        [reduce using rule 71 (bracket)]
+    THEN      reduce using rule 65 (expr)
+    THEN      [reduce using rule 71 (bracket)]
+    $default  reduce using rule 65 (expr)
+
+    bracket  go to state 65
+
+
+State 61
+
+   62 expr: expr . control expr
+   63     | '(' expr . ')'
 
     ')'  shift, and go to state 96
     ADD  shift, and go to state 69
@@ -941,58 +928,10 @@ State 60
     control  go to state 74
 
 
-State 61
-
-   61 expr: SUB num .
-   66     | num .
-
-    ','       reduce using rule 61 (expr)
-    ','       [reduce using rule 66 (expr)]
-    ';'       reduce using rule 61 (expr)
-    ';'       [reduce using rule 66 (expr)]
-    ')'       reduce using rule 61 (expr)
-    ')'       [reduce using rule 66 (expr)]
-    ']'       reduce using rule 61 (expr)
-    ']'       [reduce using rule 66 (expr)]
-    ADD       reduce using rule 61 (expr)
-    ADD       [reduce using rule 66 (expr)]
-    SUB       reduce using rule 61 (expr)
-    SUB       [reduce using rule 66 (expr)]
-    MUL       reduce using rule 61 (expr)
-    MUL       [reduce using rule 66 (expr)]
-    DIV       reduce using rule 61 (expr)
-    DIV       [reduce using rule 66 (expr)]
-    MOD       reduce using rule 61 (expr)
-    MOD       [reduce using rule 66 (expr)]
-    ASSIGN    reduce using rule 61 (expr)
-    ASSIGN    [reduce using rule 66 (expr)]
-    GT        reduce using rule 61 (expr)
-    GT        [reduce using rule 66 (expr)]
-    GE        reduce using rule 61 (expr)
-    GE        [reduce using rule 66 (expr)]
-    NE        reduce using rule 61 (expr)
-    NE        [reduce using rule 66 (expr)]
-    LE        reduce using rule 61 (expr)
-    LE        [reduce using rule 66 (expr)]
-    LT        reduce using rule 61 (expr)
-    LT        [reduce using rule 66 (expr)]
-    EQ        reduce using rule 61 (expr)
-    EQ        [reduce using rule 66 (expr)]
-    AND       reduce using rule 61 (expr)
-    AND       [reduce using rule 66 (expr)]
-    OR        reduce using rule 61 (expr)
-    OR        [reduce using rule 66 (expr)]
-    DO        reduce using rule 61 (expr)
-    DO        [reduce using rule 66 (expr)]
-    THEN      reduce using rule 61 (expr)
-    THEN      [reduce using rule 66 (expr)]
-    $default  reduce using rule 61 (expr)
-
-
 State 62
 
-   62 expr: SUB expr .
-   64     | expr . control expr
+   61 expr: SUB expr .
+   62     | expr . control expr
 
     ADD  shift, and go to state 69
     SUB  shift, and go to state 70
@@ -1000,84 +939,67 @@ State 62
     DIV  shift, and go to state 72
     MOD  shift, and go to state 73
 
-    ADD       [reduce using rule 62 (expr)]
-    SUB       [reduce using rule 62 (expr)]
-    MUL       [reduce using rule 62 (expr)]
-    DIV       [reduce using rule 62 (expr)]
-    MOD       [reduce using rule 62 (expr)]
-    $default  reduce using rule 62 (expr)
+    ADD       [reduce using rule 61 (expr)]
+    SUB       [reduce using rule 61 (expr)]
+    MUL       [reduce using rule 61 (expr)]
+    DIV       [reduce using rule 61 (expr)]
+    MOD       [reduce using rule 61 (expr)]
+    $default  reduce using rule 61 (expr)
 
     control  go to state 74
 
 
 State 63
 
-   63 expr: NOT expr .
-   64     | expr . control expr
+   33 func_invocation: ID '(' . func ')'
 
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
+    '('    shift, and go to state 39
+    SUB    shift, and go to state 40
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 44
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    ADD       [reduce using rule 63 (expr)]
-    SUB       [reduce using rule 63 (expr)]
-    MUL       [reduce using rule 63 (expr)]
-    DIV       [reduce using rule 63 (expr)]
-    MOD       [reduce using rule 63 (expr)]
-    $default  reduce using rule 63 (expr)
+    $default  reduce using rule 51 (func)
 
-    control  go to state 74
+    id_list          go to state 48
+    func_invocation  go to state 49
+    func             go to state 97
+    num              go to state 51
+    expr             go to state 52
+    expr_f           go to state 53
 
 
 State 64
 
-   68 expr: ID '(' . expr_f ')'
+   70 bracket: '[' . expr ']' bracket
 
     '('    shift, and go to state 39
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num     go to state 51
-    expr    go to state 97
-    expr_f  go to state 98
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 98
 
 
 State 65
 
-   72 bracket: '[' . expr ']' bracket
+   67 expr: ID bracket .
 
-    '('    shift, and go to state 39
-    SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
-
-    num   go to state 51
-    expr  go to state 99
+    $default  reduce using rule 67 (expr)
 
 
 State 66
-
-   69 expr: ID bracket .
-
-    $default  reduce using rule 69 (expr)
-
-
-State 67
 
    48 func: id_list ':' . scalar_type ';' func
    49     | id_list ':' . scalar_type
@@ -1088,16 +1010,36 @@ State 67
     REAL     shift, and go to state 28
     STRING   shift, and go to state 35
 
-    scalar_type  go to state 100
+    scalar_type  go to state 99
 
 
-State 68
+State 67
 
    23 func_d: ID '(' func ')' . ':' scalar_type ';' compound_state END ID
    24 func_p: ID '(' func ')' . ';' compound_state END ID
 
-    ';'  shift, and go to state 101
-    ':'  shift, and go to state 102
+    ';'  shift, and go to state 100
+    ':'  shift, and go to state 101
+
+
+State 68
+
+   72 expr_f: expr ',' . expr_f
+
+    '('    shift, and go to state 39
+    SUB    shift, and go to state 40
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
+
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 52
+    expr_f           go to state 102
 
 
 State 69
@@ -1137,21 +1079,21 @@ State 73
 
 State 74
 
-   64 expr: expr control . expr
+   62 expr: expr control . expr
 
     '('    shift, and go to state 39
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num   go to state 51
-    expr  go to state 103
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 103
 
 
 State 75
@@ -1168,18 +1110,19 @@ State 76
 
     '('    shift, and go to state 105
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    NOT    shift, and go to state 106
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num           go to state 51
-    expr          go to state 106
-    boolean_expr  go to state 107
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 107
+    boolean_expr     go to state 108
 
 
 State 77
@@ -1190,19 +1133,19 @@ State 77
 
     '('    shift, and go to state 39
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 108
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 109
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
     BS     shift, and go to state 34
 
-    num   go to state 51
-    expr  go to state 109
-    str   go to state 110
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 110
+    str              go to state 111
 
 
 State 78
@@ -1213,19 +1156,19 @@ State 78
 
     '('    shift, and go to state 39
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 111
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 112
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
     BS     shift, and go to state 34
 
-    num   go to state 51
-    expr  go to state 112
-    str   go to state 113
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 113
+    str              go to state 114
 
 
 State 79
@@ -1234,47 +1177,47 @@ State 79
 
     '('    shift, and go to state 105
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    NOT    shift, and go to state 106
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num           go to state 51
-    expr          go to state 106
-    boolean_expr  go to state 114
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 107
+    boolean_expr     go to state 115
 
 
 State 80
 
-   33 func_invocation: ID . '(' func ')' ';'
+   33 func_invocation: ID . '(' func ')'
    35 simple_state: ID . ASSIGN boolean_expr ';'
-   67 expr: ID .
-   68     | ID . '(' expr_f ')'
-   69     | ID . bracket
+   65 expr: ID .
+   67     | ID . bracket
 
-    '('     shift, and go to state 115
-    '['     shift, and go to state 65
+    '('     shift, and go to state 63
+    '['     shift, and go to state 64
     ASSIGN  shift, and go to state 116
 
-    ADD       reduce using rule 67 (expr)
-    ADD       [reduce using rule 73 (bracket)]
-    SUB       reduce using rule 67 (expr)
-    SUB       [reduce using rule 73 (bracket)]
-    MUL       reduce using rule 67 (expr)
-    MUL       [reduce using rule 73 (bracket)]
-    DIV       reduce using rule 67 (expr)
-    DIV       [reduce using rule 73 (bracket)]
-    MOD       reduce using rule 67 (expr)
-    MOD       [reduce using rule 73 (bracket)]
-    ASSIGN    [reduce using rule 67 (expr)]
-    ASSIGN    [reduce using rule 73 (bracket)]
-    $default  reduce using rule 67 (expr)
+    ADD       reduce using rule 65 (expr)
+    ADD       [reduce using rule 71 (bracket)]
+    SUB       reduce using rule 65 (expr)
+    SUB       [reduce using rule 71 (bracket)]
+    MUL       reduce using rule 65 (expr)
+    MUL       [reduce using rule 71 (bracket)]
+    DIV       reduce using rule 65 (expr)
+    DIV       [reduce using rule 71 (bracket)]
+    MOD       reduce using rule 65 (expr)
+    MOD       [reduce using rule 71 (bracket)]
+    ASSIGN    [reduce using rule 65 (expr)]
+    ASSIGN    [reduce using rule 71 (bracket)]
+    $default  reduce using rule 65 (expr)
 
-    bracket  go to state 66
+    bracket  go to state 65
 
 
 State 81
@@ -1283,18 +1226,19 @@ State 81
 
     '('    shift, and go to state 105
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    NOT    shift, and go to state 106
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num           go to state 51
-    expr          go to state 106
-    boolean_expr  go to state 117
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 107
+    boolean_expr     go to state 117
 
 
 State 82
@@ -1306,38 +1250,12 @@ State 82
 
 State 83
 
-   31 state: func_invocation . state
+   31 state: func_invocation . ';' state
+   66 expr: func_invocation .
 
-    '('     shift, and go to state 39
-    SUB     shift, and go to state 40
-    NOT     shift, and go to state 41
-    BEG     shift, and go to state 19
-    FALSE   shift, and go to state 42
-    FOR     shift, and go to state 75
-    IF      shift, and go to state 76
-    PRINT   shift, and go to state 77
-    READ    shift, and go to state 78
-    TRUE    shift, and go to state 43
-    WHILE   shift, and go to state 79
-    OCT     shift, and go to state 44
-    ID      shift, and go to state 80
-    INT     shift, and go to state 46
-    FLOAT   shift, and go to state 47
-    SCI     shift, and go to state 48
-    RETURN  shift, and go to state 81
+    ';'  shift, and go to state 119
 
-    $default  reduce using rule 32 (state)
-
-    state              go to state 119
-    func_invocation    go to state 83
-    compound_state     go to state 84
-    simple_state       go to state 85
-    conditional_state  go to state 86
-    while_state        go to state 87
-    for_state          go to state 88
-    return_state       go to state 89
-    num                go to state 51
-    expr               go to state 90
+    $default  reduce using rule 66 (expr)
 
 
 State 84
@@ -1346,20 +1264,19 @@ State 84
 
     '('     shift, and go to state 39
     SUB     shift, and go to state 40
-    NOT     shift, and go to state 41
     BEG     shift, and go to state 19
-    FALSE   shift, and go to state 42
+    FALSE   shift, and go to state 41
     FOR     shift, and go to state 75
     IF      shift, and go to state 76
     PRINT   shift, and go to state 77
     READ    shift, and go to state 78
-    TRUE    shift, and go to state 43
+    TRUE    shift, and go to state 42
     WHILE   shift, and go to state 79
-    OCT     shift, and go to state 44
+    OCT     shift, and go to state 43
     ID      shift, and go to state 80
-    INT     shift, and go to state 46
-    FLOAT   shift, and go to state 47
-    SCI     shift, and go to state 48
+    INT     shift, and go to state 45
+    FLOAT   shift, and go to state 46
+    SCI     shift, and go to state 47
     RETURN  shift, and go to state 81
 
     $default  reduce using rule 32 (state)
@@ -1382,20 +1299,19 @@ State 85
 
     '('     shift, and go to state 39
     SUB     shift, and go to state 40
-    NOT     shift, and go to state 41
     BEG     shift, and go to state 19
-    FALSE   shift, and go to state 42
+    FALSE   shift, and go to state 41
     FOR     shift, and go to state 75
     IF      shift, and go to state 76
     PRINT   shift, and go to state 77
     READ    shift, and go to state 78
-    TRUE    shift, and go to state 43
+    TRUE    shift, and go to state 42
     WHILE   shift, and go to state 79
-    OCT     shift, and go to state 44
+    OCT     shift, and go to state 43
     ID      shift, and go to state 80
-    INT     shift, and go to state 46
-    FLOAT   shift, and go to state 47
-    SCI     shift, and go to state 48
+    INT     shift, and go to state 45
+    FLOAT   shift, and go to state 46
+    SCI     shift, and go to state 47
     RETURN  shift, and go to state 81
 
     $default  reduce using rule 32 (state)
@@ -1418,20 +1334,19 @@ State 86
 
     '('     shift, and go to state 39
     SUB     shift, and go to state 40
-    NOT     shift, and go to state 41
     BEG     shift, and go to state 19
-    FALSE   shift, and go to state 42
+    FALSE   shift, and go to state 41
     FOR     shift, and go to state 75
     IF      shift, and go to state 76
     PRINT   shift, and go to state 77
     READ    shift, and go to state 78
-    TRUE    shift, and go to state 43
+    TRUE    shift, and go to state 42
     WHILE   shift, and go to state 79
-    OCT     shift, and go to state 44
+    OCT     shift, and go to state 43
     ID      shift, and go to state 80
-    INT     shift, and go to state 46
-    FLOAT   shift, and go to state 47
-    SCI     shift, and go to state 48
+    INT     shift, and go to state 45
+    FLOAT   shift, and go to state 46
+    SCI     shift, and go to state 47
     RETURN  shift, and go to state 81
 
     $default  reduce using rule 32 (state)
@@ -1454,20 +1369,19 @@ State 87
 
     '('     shift, and go to state 39
     SUB     shift, and go to state 40
-    NOT     shift, and go to state 41
     BEG     shift, and go to state 19
-    FALSE   shift, and go to state 42
+    FALSE   shift, and go to state 41
     FOR     shift, and go to state 75
     IF      shift, and go to state 76
     PRINT   shift, and go to state 77
     READ    shift, and go to state 78
-    TRUE    shift, and go to state 43
+    TRUE    shift, and go to state 42
     WHILE   shift, and go to state 79
-    OCT     shift, and go to state 44
+    OCT     shift, and go to state 43
     ID      shift, and go to state 80
-    INT     shift, and go to state 46
-    FLOAT   shift, and go to state 47
-    SCI     shift, and go to state 48
+    INT     shift, and go to state 45
+    FLOAT   shift, and go to state 46
+    SCI     shift, and go to state 47
     RETURN  shift, and go to state 81
 
     $default  reduce using rule 32 (state)
@@ -1490,20 +1404,19 @@ State 88
 
     '('     shift, and go to state 39
     SUB     shift, and go to state 40
-    NOT     shift, and go to state 41
     BEG     shift, and go to state 19
-    FALSE   shift, and go to state 42
+    FALSE   shift, and go to state 41
     FOR     shift, and go to state 75
     IF      shift, and go to state 76
     PRINT   shift, and go to state 77
     READ    shift, and go to state 78
-    TRUE    shift, and go to state 43
+    TRUE    shift, and go to state 42
     WHILE   shift, and go to state 79
-    OCT     shift, and go to state 44
+    OCT     shift, and go to state 43
     ID      shift, and go to state 80
-    INT     shift, and go to state 46
-    FLOAT   shift, and go to state 47
-    SCI     shift, and go to state 48
+    INT     shift, and go to state 45
+    FLOAT   shift, and go to state 46
+    SCI     shift, and go to state 47
     RETURN  shift, and go to state 81
 
     $default  reduce using rule 32 (state)
@@ -1526,20 +1439,19 @@ State 89
 
     '('     shift, and go to state 39
     SUB     shift, and go to state 40
-    NOT     shift, and go to state 41
     BEG     shift, and go to state 19
-    FALSE   shift, and go to state 42
+    FALSE   shift, and go to state 41
     FOR     shift, and go to state 75
     IF      shift, and go to state 76
     PRINT   shift, and go to state 77
     READ    shift, and go to state 78
-    TRUE    shift, and go to state 43
+    TRUE    shift, and go to state 42
     WHILE   shift, and go to state 79
-    OCT     shift, and go to state 44
+    OCT     shift, and go to state 43
     ID      shift, and go to state 80
-    INT     shift, and go to state 46
-    FLOAT   shift, and go to state 47
-    SCI     shift, and go to state 48
+    INT     shift, and go to state 45
+    FLOAT   shift, and go to state 46
+    SCI     shift, and go to state 47
     RETURN  shift, and go to state 81
 
     $default  reduce using rule 32 (state)
@@ -1558,8 +1470,8 @@ State 89
 
 State 90
 
-   36 simple_state: expr . ASSIGN boolean_expr ';'
-   64 expr: expr . control expr
+   36 simple_state: expr . ASSIGN expr ';'
+   62 expr: expr . control expr
 
     ADD     shift, and go to state 69
     SUB     shift, and go to state 70
@@ -1580,16 +1492,16 @@ State 91
 
 State 92
 
-   96 str_c: BSS str_c .
+   86 str_c: BSS str_c .
 
-    $default  reduce using rule 96 (str_c)
+    $default  reduce using rule 86 (str_c)
 
 
 State 93
 
-   95 str: BS str_c BSSS .
+   85 str: BS str_c BSSS .
 
-    $default  reduce using rule 95 (str)
+    $default  reduce using rule 85 (str)
 
 
 State 94
@@ -1608,42 +1520,24 @@ State 95
 
 State 96
 
-   65 expr: '(' expr ')' .
+   63 expr: '(' expr ')' .
 
-    $default  reduce using rule 65 (expr)
+    $default  reduce using rule 63 (expr)
 
 
 State 97
 
-   64 expr: expr . control expr
-   74 expr_f: expr . ',' expr_f
-   75       | expr .
+   33 func_invocation: ID '(' func . ')'
 
-    ','  shift, and go to state 128
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-
-    $default  reduce using rule 75 (expr_f)
-
-    control  go to state 74
+    ')'  shift, and go to state 128
 
 
 State 98
 
-   68 expr: ID '(' expr_f . ')'
+   62 expr: expr . control expr
+   70 bracket: '[' expr . ']' bracket
 
-    ')'  shift, and go to state 129
-
-
-State 99
-
-   64 expr: expr . control expr
-   72 bracket: '[' expr . ']' bracket
-
-    ']'  shift, and go to state 130
+    ']'  shift, and go to state 129
     ADD  shift, and go to state 69
     SUB  shift, and go to state 70
     MUL  shift, and go to state 71
@@ -1653,26 +1547,26 @@ State 99
     control  go to state 74
 
 
-State 100
+State 99
 
    48 func: id_list ':' scalar_type . ';' func
    49     | id_list ':' scalar_type .
 
-    ';'  shift, and go to state 131
+    ';'  shift, and go to state 130
 
     $default  reduce using rule 49 (func)
 
 
-State 101
+State 100
 
    24 func_p: ID '(' func ')' ';' . compound_state END ID
 
     BEG  shift, and go to state 19
 
-    compound_state  go to state 132
+    compound_state  go to state 131
 
 
-State 102
+State 101
 
    23 func_d: ID '(' func ')' ':' . scalar_type ';' compound_state END ID
 
@@ -1682,13 +1576,20 @@ State 102
     REAL     shift, and go to state 28
     STRING   shift, and go to state 35
 
-    scalar_type  go to state 133
+    scalar_type  go to state 132
+
+
+State 102
+
+   72 expr_f: expr ',' expr_f .
+
+    $default  reduce using rule 72 (expr_f)
 
 
 State 103
 
-   64 expr: expr . control expr
-   64     | expr control expr .
+   62 expr: expr . control expr
+   62     | expr control expr .
 
     ADD  shift, and go to state 69
     SUB  shift, and go to state 70
@@ -1696,12 +1597,12 @@ State 103
     DIV  shift, and go to state 72
     MOD  shift, and go to state 73
 
-    ADD       [reduce using rule 64 (expr)]
-    SUB       [reduce using rule 64 (expr)]
-    MUL       [reduce using rule 64 (expr)]
-    DIV       [reduce using rule 64 (expr)]
-    MOD       [reduce using rule 64 (expr)]
-    $default  reduce using rule 64 (expr)
+    ADD       [reduce using rule 62 (expr)]
+    SUB       [reduce using rule 62 (expr)]
+    MUL       [reduce using rule 62 (expr)]
+    DIV       [reduce using rule 62 (expr)]
+    MOD       [reduce using rule 62 (expr)]
+    $default  reduce using rule 62 (expr)
 
     control  go to state 74
 
@@ -1710,102 +1611,124 @@ State 104
 
    46 for_state: FOR ID . ASSIGN INT TO INT DO state END DO
 
-    ASSIGN  shift, and go to state 134
+    ASSIGN  shift, and go to state 133
 
 
 State 105
 
-   65 expr: '(' . expr ')'
-   76 boolean_expr: '(' . boolean_expr ')'
+   63 expr: '(' . expr ')'
+   74 boolean_expr: '(' . boolean_expr ')'
 
     '('    shift, and go to state 105
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    NOT    shift, and go to state 106
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num           go to state 51
-    expr          go to state 135
-    boolean_expr  go to state 136
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 134
+    boolean_expr     go to state 135
 
 
 State 106
 
-   64 expr: expr . control expr
-   77 boolean_expr: expr . GT expr boolean_expr2
-   78             | expr . LT expr boolean_expr2
-   79             | expr . EQ expr boolean_expr2
-   80             | expr . GE expr boolean_expr2
-   81             | expr . LE expr boolean_expr2
-   82             | expr . NE expr boolean_expr2
-   83             | expr . AND expr boolean_expr2
-   84             | expr . OR expr boolean_expr2
-   85             | expr .
+   83 boolean_expr: NOT . boolean_expr
+
+    '('    shift, and go to state 105
+    SUB    shift, and go to state 40
+    NOT    shift, and go to state 106
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
+
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 107
+    boolean_expr     go to state 136
+
+
+State 107
+
+   62 expr: expr . control expr
+   84 boolean_expr: expr .
 
     ADD  shift, and go to state 69
     SUB  shift, and go to state 70
     MUL  shift, and go to state 71
     DIV  shift, and go to state 72
     MOD  shift, and go to state 73
-    GT   shift, and go to state 137
-    GE   shift, and go to state 138
-    NE   shift, and go to state 139
-    LE   shift, and go to state 140
-    LT   shift, and go to state 141
-    EQ   shift, and go to state 142
-    AND  shift, and go to state 143
-    OR   shift, and go to state 144
 
-    $default  reduce using rule 85 (boolean_expr)
+    $default  reduce using rule 84 (boolean_expr)
 
     control  go to state 74
 
 
-State 107
+State 108
 
    43 conditional_state: IF boolean_expr . THEN state END IF
    44                  | IF boolean_expr . THEN state ELSE state END IF
+   75 boolean_expr: boolean_expr . GT boolean_expr
+   76             | boolean_expr . LT boolean_expr
+   77             | boolean_expr . EQ boolean_expr
+   78             | boolean_expr . GE boolean_expr
+   79             | boolean_expr . LE boolean_expr
+   80             | boolean_expr . NE boolean_expr
+   81             | boolean_expr . AND boolean_expr
+   82             | boolean_expr . OR boolean_expr
 
+    GT    shift, and go to state 137
+    GE    shift, and go to state 138
+    NE    shift, and go to state 139
+    LE    shift, and go to state 140
+    LT    shift, and go to state 141
+    EQ    shift, and go to state 142
+    AND   shift, and go to state 143
+    OR    shift, and go to state 144
     THEN  shift, and go to state 145
-
-
-State 108
-
-   37 simple_state: PRINT ID . ';'
-   67 expr: ID .
-   68     | ID . '(' expr_f ')'
-   69     | ID . bracket
-
-    ';'  shift, and go to state 146
-    '('  shift, and go to state 64
-    '['  shift, and go to state 65
-
-    ';'       [reduce using rule 67 (expr)]
-    ';'       [reduce using rule 73 (bracket)]
-    ADD       reduce using rule 67 (expr)
-    ADD       [reduce using rule 73 (bracket)]
-    SUB       reduce using rule 67 (expr)
-    SUB       [reduce using rule 73 (bracket)]
-    MUL       reduce using rule 67 (expr)
-    MUL       [reduce using rule 73 (bracket)]
-    DIV       reduce using rule 67 (expr)
-    DIV       [reduce using rule 73 (bracket)]
-    MOD       reduce using rule 67 (expr)
-    MOD       [reduce using rule 73 (bracket)]
-    $default  reduce using rule 67 (expr)
-
-    bracket  go to state 66
 
 
 State 109
 
+   33 func_invocation: ID . '(' func ')'
+   37 simple_state: PRINT ID . ';'
+   65 expr: ID .
+   67     | ID . bracket
+
+    ';'  shift, and go to state 146
+    '('  shift, and go to state 63
+    '['  shift, and go to state 64
+
+    ';'       [reduce using rule 65 (expr)]
+    ';'       [reduce using rule 71 (bracket)]
+    ADD       reduce using rule 65 (expr)
+    ADD       [reduce using rule 71 (bracket)]
+    SUB       reduce using rule 65 (expr)
+    SUB       [reduce using rule 71 (bracket)]
+    MUL       reduce using rule 65 (expr)
+    MUL       [reduce using rule 71 (bracket)]
+    DIV       reduce using rule 65 (expr)
+    DIV       [reduce using rule 71 (bracket)]
+    MOD       reduce using rule 65 (expr)
+    MOD       [reduce using rule 71 (bracket)]
+    $default  reduce using rule 65 (expr)
+
+    bracket  go to state 65
+
+
+State 110
+
    38 simple_state: PRINT expr . ';'
-   64 expr: expr . control expr
+   62 expr: expr . control expr
 
     ';'  shift, and go to state 147
     ADD  shift, and go to state 69
@@ -1817,45 +1740,45 @@ State 109
     control  go to state 74
 
 
-State 110
+State 111
 
    39 simple_state: PRINT str . ';'
 
     ';'  shift, and go to state 148
 
 
-State 111
-
-   40 simple_state: READ ID . ';'
-   67 expr: ID .
-   68     | ID . '(' expr_f ')'
-   69     | ID . bracket
-
-    ';'  shift, and go to state 149
-    '('  shift, and go to state 64
-    '['  shift, and go to state 65
-
-    ';'       [reduce using rule 67 (expr)]
-    ';'       [reduce using rule 73 (bracket)]
-    ADD       reduce using rule 67 (expr)
-    ADD       [reduce using rule 73 (bracket)]
-    SUB       reduce using rule 67 (expr)
-    SUB       [reduce using rule 73 (bracket)]
-    MUL       reduce using rule 67 (expr)
-    MUL       [reduce using rule 73 (bracket)]
-    DIV       reduce using rule 67 (expr)
-    DIV       [reduce using rule 73 (bracket)]
-    MOD       reduce using rule 67 (expr)
-    MOD       [reduce using rule 73 (bracket)]
-    $default  reduce using rule 67 (expr)
-
-    bracket  go to state 66
-
-
 State 112
 
+   33 func_invocation: ID . '(' func ')'
+   40 simple_state: READ ID . ';'
+   65 expr: ID .
+   67     | ID . bracket
+
+    ';'  shift, and go to state 149
+    '('  shift, and go to state 63
+    '['  shift, and go to state 64
+
+    ';'       [reduce using rule 65 (expr)]
+    ';'       [reduce using rule 71 (bracket)]
+    ADD       reduce using rule 65 (expr)
+    ADD       [reduce using rule 71 (bracket)]
+    SUB       reduce using rule 65 (expr)
+    SUB       [reduce using rule 71 (bracket)]
+    MUL       reduce using rule 65 (expr)
+    MUL       [reduce using rule 71 (bracket)]
+    DIV       reduce using rule 65 (expr)
+    DIV       [reduce using rule 71 (bracket)]
+    MOD       reduce using rule 65 (expr)
+    MOD       [reduce using rule 71 (bracket)]
+    $default  reduce using rule 65 (expr)
+
+    bracket  go to state 65
+
+
+State 113
+
    41 simple_state: READ expr . ';'
-   64 expr: expr . control expr
+   62 expr: expr . control expr
 
     ';'  shift, and go to state 150
     ADD  shift, and go to state 69
@@ -1867,43 +1790,34 @@ State 112
     control  go to state 74
 
 
-State 113
+State 114
 
    42 simple_state: READ str . ';'
 
     ';'  shift, and go to state 151
 
 
-State 114
-
-   45 while_state: WHILE boolean_expr . DO state END DO
-
-    DO  shift, and go to state 152
-
-
 State 115
 
-   33 func_invocation: ID '(' . func ')' ';'
-   68 expr: ID '(' . expr_f ')'
+   45 while_state: WHILE boolean_expr . DO state END DO
+   75 boolean_expr: boolean_expr . GT boolean_expr
+   76             | boolean_expr . LT boolean_expr
+   77             | boolean_expr . EQ boolean_expr
+   78             | boolean_expr . GE boolean_expr
+   79             | boolean_expr . LE boolean_expr
+   80             | boolean_expr . NE boolean_expr
+   81             | boolean_expr . AND boolean_expr
+   82             | boolean_expr . OR boolean_expr
 
-    '('    shift, and go to state 39
-    SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 45
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
-
-    $default  reduce using rule 51 (func)
-
-    id_list  go to state 49
-    func     go to state 153
-    num      go to state 51
-    expr     go to state 154
-    expr_f   go to state 98
+    GT   shift, and go to state 137
+    GE   shift, and go to state 138
+    NE   shift, and go to state 139
+    LE   shift, and go to state 140
+    LT   shift, and go to state 141
+    EQ   shift, and go to state 142
+    AND  shift, and go to state 143
+    OR   shift, and go to state 144
+    DO   shift, and go to state 152
 
 
 State 116
@@ -1912,25 +1826,42 @@ State 116
 
     '('    shift, and go to state 105
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    NOT    shift, and go to state 106
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num           go to state 51
-    expr          go to state 106
-    boolean_expr  go to state 155
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 107
+    boolean_expr     go to state 153
 
 
 State 117
 
    47 return_state: RETURN boolean_expr . ';'
+   75 boolean_expr: boolean_expr . GT boolean_expr
+   76             | boolean_expr . LT boolean_expr
+   77             | boolean_expr . EQ boolean_expr
+   78             | boolean_expr . GE boolean_expr
+   79             | boolean_expr . LE boolean_expr
+   80             | boolean_expr . NE boolean_expr
+   81             | boolean_expr . AND boolean_expr
+   82             | boolean_expr . OR boolean_expr
 
-    ';'  shift, and go to state 156
+    ';'  shift, and go to state 154
+    GT   shift, and go to state 137
+    GE   shift, and go to state 138
+    NE   shift, and go to state 139
+    LE   shift, and go to state 140
+    LT   shift, and go to state 141
+    EQ   shift, and go to state 142
+    AND  shift, and go to state 143
+    OR   shift, and go to state 144
 
 
 State 118
@@ -1942,9 +1873,37 @@ State 118
 
 State 119
 
-   31 state: func_invocation state .
+   31 state: func_invocation ';' . state
 
-    $default  reduce using rule 31 (state)
+    '('     shift, and go to state 39
+    SUB     shift, and go to state 40
+    BEG     shift, and go to state 19
+    FALSE   shift, and go to state 41
+    FOR     shift, and go to state 75
+    IF      shift, and go to state 76
+    PRINT   shift, and go to state 77
+    READ    shift, and go to state 78
+    TRUE    shift, and go to state 42
+    WHILE   shift, and go to state 79
+    OCT     shift, and go to state 43
+    ID      shift, and go to state 80
+    INT     shift, and go to state 45
+    FLOAT   shift, and go to state 46
+    SCI     shift, and go to state 47
+    RETURN  shift, and go to state 81
+
+    $default  reduce using rule 32 (state)
+
+    state              go to state 155
+    func_invocation    go to state 83
+    compound_state     go to state 84
+    simple_state       go to state 85
+    conditional_state  go to state 86
+    while_state        go to state 87
+    for_state          go to state 88
+    return_state       go to state 89
+    num                go to state 51
+    expr               go to state 90
 
 
 State 120
@@ -1991,126 +1950,98 @@ State 125
 
 State 126
 
-   36 simple_state: expr ASSIGN . boolean_expr ';'
+   36 simple_state: expr ASSIGN . expr ';'
 
-    '('    shift, and go to state 105
+    '('    shift, and go to state 39
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num           go to state 51
-    expr          go to state 106
-    boolean_expr  go to state 157
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 156
 
 
 State 127
 
    12 scalar_type: ARRAY INT TO INT . OF scalar_type
 
-    OF  shift, and go to state 158
+    OF  shift, and go to state 157
 
 
 State 128
 
-   74 expr_f: expr ',' . expr_f
+   33 func_invocation: ID '(' func ')' .
 
-    '('    shift, and go to state 39
-    SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
-
-    num     go to state 51
-    expr    go to state 97
-    expr_f  go to state 159
+    $default  reduce using rule 33 (func_invocation)
 
 
 State 129
 
-   68 expr: ID '(' expr_f ')' .
+   70 bracket: '[' expr ']' . bracket
 
-    $default  reduce using rule 68 (expr)
+    '['  shift, and go to state 64
+
+    $default  reduce using rule 71 (bracket)
+
+    bracket  go to state 158
 
 
 State 130
-
-   72 bracket: '[' expr ']' . bracket
-
-    '['  shift, and go to state 65
-
-    $default  reduce using rule 73 (bracket)
-
-    bracket  go to state 160
-
-
-State 131
 
    48 func: id_list ':' scalar_type ';' . func
 
     '('    shift, and go to state 39
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 45
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 44
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
     $default  reduce using rule 51 (func)
 
-    id_list  go to state 49
-    func     go to state 161
-    num      go to state 51
-    expr     go to state 52
+    id_list          go to state 48
+    func_invocation  go to state 49
+    func             go to state 159
+    num              go to state 51
+    expr             go to state 52
+    expr_f           go to state 53
+
+
+State 131
+
+   24 func_p: ID '(' func ')' ';' compound_state . END ID
+
+    END  shift, and go to state 160
 
 
 State 132
 
-   24 func_p: ID '(' func ')' ';' compound_state . END ID
+   23 func_d: ID '(' func ')' ':' scalar_type . ';' compound_state END ID
 
-    END  shift, and go to state 162
+    ';'  shift, and go to state 161
 
 
 State 133
 
-   23 func_d: ID '(' func ')' ':' scalar_type . ';' compound_state END ID
+   46 for_state: FOR ID ASSIGN . INT TO INT DO state END DO
 
-    ';'  shift, and go to state 163
+    INT  shift, and go to state 162
 
 
 State 134
 
-   46 for_state: FOR ID ASSIGN . INT TO INT DO state END DO
-
-    INT  shift, and go to state 164
-
-
-State 135
-
-   64 expr: expr . control expr
-   65     | '(' expr . ')'
-   77 boolean_expr: expr . GT expr boolean_expr2
-   78             | expr . LT expr boolean_expr2
-   79             | expr . EQ expr boolean_expr2
-   80             | expr . GE expr boolean_expr2
-   81             | expr . LE expr boolean_expr2
-   82             | expr . NE expr boolean_expr2
-   83             | expr . AND expr boolean_expr2
-   84             | expr . OR expr boolean_expr2
-   85             | expr .
+   62 expr: expr . control expr
+   63     | '(' expr . ')'
+   84 boolean_expr: expr .
 
     ')'  shift, and go to state 96
     ADD  shift, and go to state 69
@@ -2118,6 +2049,26 @@ State 135
     MUL  shift, and go to state 71
     DIV  shift, and go to state 72
     MOD  shift, and go to state 73
+
+    ')'       [reduce using rule 84 (boolean_expr)]
+    $default  reduce using rule 84 (boolean_expr)
+
+    control  go to state 74
+
+
+State 135
+
+   74 boolean_expr: '(' boolean_expr . ')'
+   75             | boolean_expr . GT boolean_expr
+   76             | boolean_expr . LT boolean_expr
+   77             | boolean_expr . EQ boolean_expr
+   78             | boolean_expr . GE boolean_expr
+   79             | boolean_expr . LE boolean_expr
+   80             | boolean_expr . NE boolean_expr
+   81             | boolean_expr . AND boolean_expr
+   82             | boolean_expr . OR boolean_expr
+
+    ')'  shift, and go to state 163
     GT   shift, and go to state 137
     GE   shift, and go to state 138
     NE   shift, and go to state 139
@@ -2127,168 +2078,205 @@ State 135
     AND  shift, and go to state 143
     OR   shift, and go to state 144
 
-    ')'  [reduce using rule 85 (boolean_expr)]
-
-    control  go to state 74
-
 
 State 136
 
-   76 boolean_expr: '(' boolean_expr . ')'
+   75 boolean_expr: boolean_expr . GT boolean_expr
+   76             | boolean_expr . LT boolean_expr
+   77             | boolean_expr . EQ boolean_expr
+   78             | boolean_expr . GE boolean_expr
+   79             | boolean_expr . LE boolean_expr
+   80             | boolean_expr . NE boolean_expr
+   81             | boolean_expr . AND boolean_expr
+   82             | boolean_expr . OR boolean_expr
+   83             | NOT boolean_expr .
 
-    ')'  shift, and go to state 165
+    GT   shift, and go to state 137
+    GE   shift, and go to state 138
+    NE   shift, and go to state 139
+    LE   shift, and go to state 140
+    LT   shift, and go to state 141
+    EQ   shift, and go to state 142
+    AND  shift, and go to state 143
+    OR   shift, and go to state 144
+
+    GT        [reduce using rule 83 (boolean_expr)]
+    GE        [reduce using rule 83 (boolean_expr)]
+    NE        [reduce using rule 83 (boolean_expr)]
+    LE        [reduce using rule 83 (boolean_expr)]
+    LT        [reduce using rule 83 (boolean_expr)]
+    EQ        [reduce using rule 83 (boolean_expr)]
+    AND       [reduce using rule 83 (boolean_expr)]
+    OR        [reduce using rule 83 (boolean_expr)]
+    $default  reduce using rule 83 (boolean_expr)
 
 
 State 137
 
-   77 boolean_expr: expr GT . expr boolean_expr2
+   75 boolean_expr: boolean_expr GT . boolean_expr
 
-    '('    shift, and go to state 39
+    '('    shift, and go to state 105
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    NOT    shift, and go to state 106
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num   go to state 51
-    expr  go to state 166
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 107
+    boolean_expr     go to state 164
 
 
 State 138
 
-   80 boolean_expr: expr GE . expr boolean_expr2
+   78 boolean_expr: boolean_expr GE . boolean_expr
 
-    '('    shift, and go to state 39
+    '('    shift, and go to state 105
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    NOT    shift, and go to state 106
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num   go to state 51
-    expr  go to state 167
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 107
+    boolean_expr     go to state 165
 
 
 State 139
 
-   82 boolean_expr: expr NE . expr boolean_expr2
+   80 boolean_expr: boolean_expr NE . boolean_expr
 
-    '('    shift, and go to state 39
+    '('    shift, and go to state 105
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    NOT    shift, and go to state 106
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num   go to state 51
-    expr  go to state 168
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 107
+    boolean_expr     go to state 166
 
 
 State 140
 
-   81 boolean_expr: expr LE . expr boolean_expr2
+   79 boolean_expr: boolean_expr LE . boolean_expr
 
-    '('    shift, and go to state 39
+    '('    shift, and go to state 105
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    NOT    shift, and go to state 106
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num   go to state 51
-    expr  go to state 169
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 107
+    boolean_expr     go to state 167
 
 
 State 141
 
-   78 boolean_expr: expr LT . expr boolean_expr2
+   76 boolean_expr: boolean_expr LT . boolean_expr
 
-    '('    shift, and go to state 39
+    '('    shift, and go to state 105
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    NOT    shift, and go to state 106
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num   go to state 51
-    expr  go to state 170
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 107
+    boolean_expr     go to state 168
 
 
 State 142
 
-   79 boolean_expr: expr EQ . expr boolean_expr2
+   77 boolean_expr: boolean_expr EQ . boolean_expr
 
-    '('    shift, and go to state 39
+    '('    shift, and go to state 105
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    NOT    shift, and go to state 106
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num   go to state 51
-    expr  go to state 171
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 107
+    boolean_expr     go to state 169
 
 
 State 143
 
-   83 boolean_expr: expr AND . expr boolean_expr2
+   81 boolean_expr: boolean_expr AND . boolean_expr
 
-    '('    shift, and go to state 39
+    '('    shift, and go to state 105
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    NOT    shift, and go to state 106
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num   go to state 51
-    expr  go to state 172
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 107
+    boolean_expr     go to state 170
 
 
 State 144
 
-   84 boolean_expr: expr OR . expr boolean_expr2
+   82 boolean_expr: boolean_expr OR . boolean_expr
 
-    '('    shift, and go to state 39
+    '('    shift, and go to state 105
     SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
+    NOT    shift, and go to state 106
+    FALSE  shift, and go to state 41
+    TRUE   shift, and go to state 42
+    OCT    shift, and go to state 43
+    ID     shift, and go to state 60
+    INT    shift, and go to state 45
+    FLOAT  shift, and go to state 46
+    SCI    shift, and go to state 47
 
-    num   go to state 51
-    expr  go to state 173
+    func_invocation  go to state 49
+    num              go to state 51
+    expr             go to state 107
+    boolean_expr     go to state 171
 
 
 State 145
@@ -2298,25 +2286,24 @@ State 145
 
     '('     shift, and go to state 39
     SUB     shift, and go to state 40
-    NOT     shift, and go to state 41
     BEG     shift, and go to state 19
-    FALSE   shift, and go to state 42
+    FALSE   shift, and go to state 41
     FOR     shift, and go to state 75
     IF      shift, and go to state 76
     PRINT   shift, and go to state 77
     READ    shift, and go to state 78
-    TRUE    shift, and go to state 43
+    TRUE    shift, and go to state 42
     WHILE   shift, and go to state 79
-    OCT     shift, and go to state 44
+    OCT     shift, and go to state 43
     ID      shift, and go to state 80
-    INT     shift, and go to state 46
-    FLOAT   shift, and go to state 47
-    SCI     shift, and go to state 48
+    INT     shift, and go to state 45
+    FLOAT   shift, and go to state 46
+    SCI     shift, and go to state 47
     RETURN  shift, and go to state 81
 
     $default  reduce using rule 32 (state)
 
-    state              go to state 174
+    state              go to state 172
     func_invocation    go to state 83
     compound_state     go to state 84
     simple_state       go to state 85
@@ -2376,25 +2363,24 @@ State 152
 
     '('     shift, and go to state 39
     SUB     shift, and go to state 40
-    NOT     shift, and go to state 41
     BEG     shift, and go to state 19
-    FALSE   shift, and go to state 42
+    FALSE   shift, and go to state 41
     FOR     shift, and go to state 75
     IF      shift, and go to state 76
     PRINT   shift, and go to state 77
     READ    shift, and go to state 78
-    TRUE    shift, and go to state 43
+    TRUE    shift, and go to state 42
     WHILE   shift, and go to state 79
-    OCT     shift, and go to state 44
+    OCT     shift, and go to state 43
     ID      shift, and go to state 80
-    INT     shift, and go to state 46
-    FLOAT   shift, and go to state 47
-    SCI     shift, and go to state 48
+    INT     shift, and go to state 45
+    FLOAT   shift, and go to state 46
+    SCI     shift, and go to state 47
     RETURN  shift, and go to state 81
 
     $default  reduce using rule 32 (state)
 
-    state              go to state 175
+    state              go to state 173
     func_invocation    go to state 83
     compound_state     go to state 84
     simple_state       go to state 85
@@ -2408,54 +2394,57 @@ State 152
 
 State 153
 
-   33 func_invocation: ID '(' func . ')' ';'
+   35 simple_state: ID ASSIGN boolean_expr . ';'
+   75 boolean_expr: boolean_expr . GT boolean_expr
+   76             | boolean_expr . LT boolean_expr
+   77             | boolean_expr . EQ boolean_expr
+   78             | boolean_expr . GE boolean_expr
+   79             | boolean_expr . LE boolean_expr
+   80             | boolean_expr . NE boolean_expr
+   81             | boolean_expr . AND boolean_expr
+   82             | boolean_expr . OR boolean_expr
 
-    ')'  shift, and go to state 176
+    ';'  shift, and go to state 174
+    GT   shift, and go to state 137
+    GE   shift, and go to state 138
+    NE   shift, and go to state 139
+    LE   shift, and go to state 140
+    LT   shift, and go to state 141
+    EQ   shift, and go to state 142
+    AND  shift, and go to state 143
+    OR   shift, and go to state 144
 
 
 State 154
-
-   50 func: expr .
-   64 expr: expr . control expr
-   74 expr_f: expr . ',' expr_f
-   75       | expr .
-
-    ','  shift, and go to state 128
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-
-    ')'       reduce using rule 50 (func)
-    ')'       [reduce using rule 75 (expr_f)]
-    $default  reduce using rule 50 (func)
-
-    control  go to state 74
-
-
-State 155
-
-   35 simple_state: ID ASSIGN boolean_expr . ';'
-
-    ';'  shift, and go to state 177
-
-
-State 156
 
    47 return_state: RETURN boolean_expr ';' .
 
     $default  reduce using rule 47 (return_state)
 
 
+State 155
+
+   31 state: func_invocation ';' state .
+
+    $default  reduce using rule 31 (state)
+
+
+State 156
+
+   36 simple_state: expr ASSIGN expr . ';'
+   62 expr: expr . control expr
+
+    ';'  shift, and go to state 175
+    ADD  shift, and go to state 69
+    SUB  shift, and go to state 70
+    MUL  shift, and go to state 71
+    DIV  shift, and go to state 72
+    MOD  shift, and go to state 73
+
+    control  go to state 74
+
+
 State 157
-
-   36 simple_state: expr ASSIGN boolean_expr . ';'
-
-    ';'  shift, and go to state 178
-
-
-State 158
 
    12 scalar_type: ARRAY INT TO INT OF . scalar_type
 
@@ -2465,558 +2454,391 @@ State 158
     REAL     shift, and go to state 28
     STRING   shift, and go to state 35
 
-    scalar_type  go to state 179
+    scalar_type  go to state 176
+
+
+State 158
+
+   70 bracket: '[' expr ']' bracket .
+
+    $default  reduce using rule 70 (bracket)
 
 
 State 159
-
-   74 expr_f: expr ',' expr_f .
-
-    $default  reduce using rule 74 (expr_f)
-
-
-State 160
-
-   72 bracket: '[' expr ']' bracket .
-
-    $default  reduce using rule 72 (bracket)
-
-
-State 161
 
    48 func: id_list ':' scalar_type ';' func .
 
     $default  reduce using rule 48 (func)
 
 
-State 162
+State 160
 
    24 func_p: ID '(' func ')' ';' compound_state END . ID
 
-    ID  shift, and go to state 180
+    ID  shift, and go to state 177
 
 
-State 163
+State 161
 
    23 func_d: ID '(' func ')' ':' scalar_type ';' . compound_state END ID
 
     BEG  shift, and go to state 19
 
-    compound_state  go to state 181
+    compound_state  go to state 178
+
+
+State 162
+
+   46 for_state: FOR ID ASSIGN INT . TO INT DO state END DO
+
+    TO  shift, and go to state 179
+
+
+State 163
+
+   74 boolean_expr: '(' boolean_expr ')' .
+
+    $default  reduce using rule 74 (boolean_expr)
 
 
 State 164
 
-   46 for_state: FOR ID ASSIGN INT . TO INT DO state END DO
+   75 boolean_expr: boolean_expr . GT boolean_expr
+   75             | boolean_expr GT boolean_expr .
+   76             | boolean_expr . LT boolean_expr
+   77             | boolean_expr . EQ boolean_expr
+   78             | boolean_expr . GE boolean_expr
+   79             | boolean_expr . LE boolean_expr
+   80             | boolean_expr . NE boolean_expr
+   81             | boolean_expr . AND boolean_expr
+   82             | boolean_expr . OR boolean_expr
 
-    TO  shift, and go to state 182
+    GT   shift, and go to state 137
+    GE   shift, and go to state 138
+    NE   shift, and go to state 139
+    LE   shift, and go to state 140
+    LT   shift, and go to state 141
+    EQ   shift, and go to state 142
+    AND  shift, and go to state 143
+    OR   shift, and go to state 144
+
+    GT        [reduce using rule 75 (boolean_expr)]
+    GE        [reduce using rule 75 (boolean_expr)]
+    NE        [reduce using rule 75 (boolean_expr)]
+    LE        [reduce using rule 75 (boolean_expr)]
+    LT        [reduce using rule 75 (boolean_expr)]
+    EQ        [reduce using rule 75 (boolean_expr)]
+    AND       [reduce using rule 75 (boolean_expr)]
+    OR        [reduce using rule 75 (boolean_expr)]
+    $default  reduce using rule 75 (boolean_expr)
 
 
 State 165
 
-   76 boolean_expr: '(' boolean_expr ')' .
+   75 boolean_expr: boolean_expr . GT boolean_expr
+   76             | boolean_expr . LT boolean_expr
+   77             | boolean_expr . EQ boolean_expr
+   78             | boolean_expr . GE boolean_expr
+   78             | boolean_expr GE boolean_expr .
+   79             | boolean_expr . LE boolean_expr
+   80             | boolean_expr . NE boolean_expr
+   81             | boolean_expr . AND boolean_expr
+   82             | boolean_expr . OR boolean_expr
 
-    $default  reduce using rule 76 (boolean_expr)
+    GT   shift, and go to state 137
+    GE   shift, and go to state 138
+    NE   shift, and go to state 139
+    LE   shift, and go to state 140
+    LT   shift, and go to state 141
+    EQ   shift, and go to state 142
+    AND  shift, and go to state 143
+    OR   shift, and go to state 144
+
+    GT        [reduce using rule 78 (boolean_expr)]
+    GE        [reduce using rule 78 (boolean_expr)]
+    NE        [reduce using rule 78 (boolean_expr)]
+    LE        [reduce using rule 78 (boolean_expr)]
+    LT        [reduce using rule 78 (boolean_expr)]
+    EQ        [reduce using rule 78 (boolean_expr)]
+    AND       [reduce using rule 78 (boolean_expr)]
+    OR        [reduce using rule 78 (boolean_expr)]
+    $default  reduce using rule 78 (boolean_expr)
 
 
 State 166
 
-   64 expr: expr . control expr
-   77 boolean_expr: expr GT expr . boolean_expr2
+   75 boolean_expr: boolean_expr . GT boolean_expr
+   76             | boolean_expr . LT boolean_expr
+   77             | boolean_expr . EQ boolean_expr
+   78             | boolean_expr . GE boolean_expr
+   79             | boolean_expr . LE boolean_expr
+   80             | boolean_expr . NE boolean_expr
+   80             | boolean_expr NE boolean_expr .
+   81             | boolean_expr . AND boolean_expr
+   82             | boolean_expr . OR boolean_expr
 
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
+    GT   shift, and go to state 137
+    GE   shift, and go to state 138
+    NE   shift, and go to state 139
+    LE   shift, and go to state 140
+    LT   shift, and go to state 141
+    EQ   shift, and go to state 142
+    AND  shift, and go to state 143
+    OR   shift, and go to state 144
 
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 191
+    GT        [reduce using rule 80 (boolean_expr)]
+    GE        [reduce using rule 80 (boolean_expr)]
+    NE        [reduce using rule 80 (boolean_expr)]
+    LE        [reduce using rule 80 (boolean_expr)]
+    LT        [reduce using rule 80 (boolean_expr)]
+    EQ        [reduce using rule 80 (boolean_expr)]
+    AND       [reduce using rule 80 (boolean_expr)]
+    OR        [reduce using rule 80 (boolean_expr)]
+    $default  reduce using rule 80 (boolean_expr)
 
 
 State 167
 
-   64 expr: expr . control expr
-   80 boolean_expr: expr GE expr . boolean_expr2
+   75 boolean_expr: boolean_expr . GT boolean_expr
+   76             | boolean_expr . LT boolean_expr
+   77             | boolean_expr . EQ boolean_expr
+   78             | boolean_expr . GE boolean_expr
+   79             | boolean_expr . LE boolean_expr
+   79             | boolean_expr LE boolean_expr .
+   80             | boolean_expr . NE boolean_expr
+   81             | boolean_expr . AND boolean_expr
+   82             | boolean_expr . OR boolean_expr
 
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
+    GT   shift, and go to state 137
+    GE   shift, and go to state 138
+    NE   shift, and go to state 139
+    LE   shift, and go to state 140
+    LT   shift, and go to state 141
+    EQ   shift, and go to state 142
+    AND  shift, and go to state 143
+    OR   shift, and go to state 144
 
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 192
+    GT        [reduce using rule 79 (boolean_expr)]
+    GE        [reduce using rule 79 (boolean_expr)]
+    NE        [reduce using rule 79 (boolean_expr)]
+    LE        [reduce using rule 79 (boolean_expr)]
+    LT        [reduce using rule 79 (boolean_expr)]
+    EQ        [reduce using rule 79 (boolean_expr)]
+    AND       [reduce using rule 79 (boolean_expr)]
+    OR        [reduce using rule 79 (boolean_expr)]
+    $default  reduce using rule 79 (boolean_expr)
 
 
 State 168
 
-   64 expr: expr . control expr
-   82 boolean_expr: expr NE expr . boolean_expr2
+   75 boolean_expr: boolean_expr . GT boolean_expr
+   76             | boolean_expr . LT boolean_expr
+   76             | boolean_expr LT boolean_expr .
+   77             | boolean_expr . EQ boolean_expr
+   78             | boolean_expr . GE boolean_expr
+   79             | boolean_expr . LE boolean_expr
+   80             | boolean_expr . NE boolean_expr
+   81             | boolean_expr . AND boolean_expr
+   82             | boolean_expr . OR boolean_expr
 
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
+    GT   shift, and go to state 137
+    GE   shift, and go to state 138
+    NE   shift, and go to state 139
+    LE   shift, and go to state 140
+    LT   shift, and go to state 141
+    EQ   shift, and go to state 142
+    AND  shift, and go to state 143
+    OR   shift, and go to state 144
 
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 193
+    GT        [reduce using rule 76 (boolean_expr)]
+    GE        [reduce using rule 76 (boolean_expr)]
+    NE        [reduce using rule 76 (boolean_expr)]
+    LE        [reduce using rule 76 (boolean_expr)]
+    LT        [reduce using rule 76 (boolean_expr)]
+    EQ        [reduce using rule 76 (boolean_expr)]
+    AND       [reduce using rule 76 (boolean_expr)]
+    OR        [reduce using rule 76 (boolean_expr)]
+    $default  reduce using rule 76 (boolean_expr)
 
 
 State 169
 
-   64 expr: expr . control expr
-   81 boolean_expr: expr LE expr . boolean_expr2
+   75 boolean_expr: boolean_expr . GT boolean_expr
+   76             | boolean_expr . LT boolean_expr
+   77             | boolean_expr . EQ boolean_expr
+   77             | boolean_expr EQ boolean_expr .
+   78             | boolean_expr . GE boolean_expr
+   79             | boolean_expr . LE boolean_expr
+   80             | boolean_expr . NE boolean_expr
+   81             | boolean_expr . AND boolean_expr
+   82             | boolean_expr . OR boolean_expr
 
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
+    GT   shift, and go to state 137
+    GE   shift, and go to state 138
+    NE   shift, and go to state 139
+    LE   shift, and go to state 140
+    LT   shift, and go to state 141
+    EQ   shift, and go to state 142
+    AND  shift, and go to state 143
+    OR   shift, and go to state 144
 
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 194
+    GT        [reduce using rule 77 (boolean_expr)]
+    GE        [reduce using rule 77 (boolean_expr)]
+    NE        [reduce using rule 77 (boolean_expr)]
+    LE        [reduce using rule 77 (boolean_expr)]
+    LT        [reduce using rule 77 (boolean_expr)]
+    EQ        [reduce using rule 77 (boolean_expr)]
+    AND       [reduce using rule 77 (boolean_expr)]
+    OR        [reduce using rule 77 (boolean_expr)]
+    $default  reduce using rule 77 (boolean_expr)
 
 
 State 170
 
-   64 expr: expr . control expr
-   78 boolean_expr: expr LT expr . boolean_expr2
+   75 boolean_expr: boolean_expr . GT boolean_expr
+   76             | boolean_expr . LT boolean_expr
+   77             | boolean_expr . EQ boolean_expr
+   78             | boolean_expr . GE boolean_expr
+   79             | boolean_expr . LE boolean_expr
+   80             | boolean_expr . NE boolean_expr
+   81             | boolean_expr . AND boolean_expr
+   81             | boolean_expr AND boolean_expr .
+   82             | boolean_expr . OR boolean_expr
 
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
+    GT   shift, and go to state 137
+    GE   shift, and go to state 138
+    NE   shift, and go to state 139
+    LE   shift, and go to state 140
+    LT   shift, and go to state 141
+    EQ   shift, and go to state 142
+    AND  shift, and go to state 143
+    OR   shift, and go to state 144
 
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 195
+    GT        [reduce using rule 81 (boolean_expr)]
+    GE        [reduce using rule 81 (boolean_expr)]
+    NE        [reduce using rule 81 (boolean_expr)]
+    LE        [reduce using rule 81 (boolean_expr)]
+    LT        [reduce using rule 81 (boolean_expr)]
+    EQ        [reduce using rule 81 (boolean_expr)]
+    AND       [reduce using rule 81 (boolean_expr)]
+    OR        [reduce using rule 81 (boolean_expr)]
+    $default  reduce using rule 81 (boolean_expr)
 
 
 State 171
 
-   64 expr: expr . control expr
-   79 boolean_expr: expr EQ expr . boolean_expr2
+   75 boolean_expr: boolean_expr . GT boolean_expr
+   76             | boolean_expr . LT boolean_expr
+   77             | boolean_expr . EQ boolean_expr
+   78             | boolean_expr . GE boolean_expr
+   79             | boolean_expr . LE boolean_expr
+   80             | boolean_expr . NE boolean_expr
+   81             | boolean_expr . AND boolean_expr
+   82             | boolean_expr . OR boolean_expr
+   82             | boolean_expr OR boolean_expr .
 
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
+    GT   shift, and go to state 137
+    GE   shift, and go to state 138
+    NE   shift, and go to state 139
+    LE   shift, and go to state 140
+    LT   shift, and go to state 141
+    EQ   shift, and go to state 142
+    AND  shift, and go to state 143
+    OR   shift, and go to state 144
 
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 196
+    GT        [reduce using rule 82 (boolean_expr)]
+    GE        [reduce using rule 82 (boolean_expr)]
+    NE        [reduce using rule 82 (boolean_expr)]
+    LE        [reduce using rule 82 (boolean_expr)]
+    LT        [reduce using rule 82 (boolean_expr)]
+    EQ        [reduce using rule 82 (boolean_expr)]
+    AND       [reduce using rule 82 (boolean_expr)]
+    OR        [reduce using rule 82 (boolean_expr)]
+    $default  reduce using rule 82 (boolean_expr)
 
 
 State 172
 
-   64 expr: expr . control expr
-   83 boolean_expr: expr AND expr . boolean_expr2
+   43 conditional_state: IF boolean_expr THEN state . END IF
+   44                  | IF boolean_expr THEN state . ELSE state END IF
 
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
-
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 197
+    ELSE  shift, and go to state 180
+    END   shift, and go to state 181
 
 
 State 173
 
-   64 expr: expr . control expr
-   84 boolean_expr: expr OR expr . boolean_expr2
+   45 while_state: WHILE boolean_expr DO state . END DO
 
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
-
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 198
+    END  shift, and go to state 182
 
 
 State 174
-
-   43 conditional_state: IF boolean_expr THEN state . END IF
-   44                  | IF boolean_expr THEN state . ELSE state END IF
-
-    ELSE  shift, and go to state 199
-    END   shift, and go to state 200
-
-
-State 175
-
-   45 while_state: WHILE boolean_expr DO state . END DO
-
-    END  shift, and go to state 201
-
-
-State 176
-
-   33 func_invocation: ID '(' func ')' . ';'
-
-    ';'  shift, and go to state 202
-
-
-State 177
 
    35 simple_state: ID ASSIGN boolean_expr ';' .
 
     $default  reduce using rule 35 (simple_state)
 
 
-State 178
+State 175
 
-   36 simple_state: expr ASSIGN boolean_expr ';' .
+   36 simple_state: expr ASSIGN expr ';' .
 
     $default  reduce using rule 36 (simple_state)
 
 
-State 179
+State 176
 
    12 scalar_type: ARRAY INT TO INT OF scalar_type .
 
     $default  reduce using rule 12 (scalar_type)
 
 
-State 180
+State 177
 
    24 func_p: ID '(' func ')' ';' compound_state END ID .
 
     $default  reduce using rule 24 (func_p)
 
 
-State 181
+State 178
 
    23 func_d: ID '(' func ')' ':' scalar_type ';' compound_state . END ID
 
-    END  shift, and go to state 203
+    END  shift, and go to state 183
 
 
-State 182
+State 179
 
    46 for_state: FOR ID ASSIGN INT TO . INT DO state END DO
 
-    INT  shift, and go to state 204
+    INT  shift, and go to state 184
 
 
-State 183
-
-   86 boolean_expr2: GT . expr boolean_expr2
-
-    '('    shift, and go to state 39
-    SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
-
-    num   go to state 51
-    expr  go to state 205
-
-
-State 184
-
-   89 boolean_expr2: GE . expr boolean_expr2
-
-    '('    shift, and go to state 39
-    SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
-
-    num   go to state 51
-    expr  go to state 206
-
-
-State 185
-
-   91 boolean_expr2: NE . expr boolean_expr2
-
-    '('    shift, and go to state 39
-    SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
-
-    num   go to state 51
-    expr  go to state 207
-
-
-State 186
-
-   90 boolean_expr2: LE . expr boolean_expr2
-
-    '('    shift, and go to state 39
-    SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
-
-    num   go to state 51
-    expr  go to state 208
-
-
-State 187
-
-   87 boolean_expr2: LT . expr boolean_expr2
-
-    '('    shift, and go to state 39
-    SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
-
-    num   go to state 51
-    expr  go to state 209
-
-
-State 188
-
-   88 boolean_expr2: EQ . expr boolean_expr2
-
-    '('    shift, and go to state 39
-    SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
-
-    num   go to state 51
-    expr  go to state 210
-
-
-State 189
-
-   92 boolean_expr2: AND . expr boolean_expr2
-
-    '('    shift, and go to state 39
-    SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
-
-    num   go to state 51
-    expr  go to state 211
-
-
-State 190
-
-   93 boolean_expr2: OR . expr boolean_expr2
-
-    '('    shift, and go to state 39
-    SUB    shift, and go to state 40
-    NOT    shift, and go to state 41
-    FALSE  shift, and go to state 42
-    TRUE   shift, and go to state 43
-    OCT    shift, and go to state 44
-    ID     shift, and go to state 59
-    INT    shift, and go to state 46
-    FLOAT  shift, and go to state 47
-    SCI    shift, and go to state 48
-
-    num   go to state 51
-    expr  go to state 212
-
-
-State 191
-
-   77 boolean_expr: expr GT expr boolean_expr2 .
-
-    $default  reduce using rule 77 (boolean_expr)
-
-
-State 192
-
-   80 boolean_expr: expr GE expr boolean_expr2 .
-
-    $default  reduce using rule 80 (boolean_expr)
-
-
-State 193
-
-   82 boolean_expr: expr NE expr boolean_expr2 .
-
-    $default  reduce using rule 82 (boolean_expr)
-
-
-State 194
-
-   81 boolean_expr: expr LE expr boolean_expr2 .
-
-    $default  reduce using rule 81 (boolean_expr)
-
-
-State 195
-
-   78 boolean_expr: expr LT expr boolean_expr2 .
-
-    $default  reduce using rule 78 (boolean_expr)
-
-
-State 196
-
-   79 boolean_expr: expr EQ expr boolean_expr2 .
-
-    $default  reduce using rule 79 (boolean_expr)
-
-
-State 197
-
-   83 boolean_expr: expr AND expr boolean_expr2 .
-
-    $default  reduce using rule 83 (boolean_expr)
-
-
-State 198
-
-   84 boolean_expr: expr OR expr boolean_expr2 .
-
-    $default  reduce using rule 84 (boolean_expr)
-
-
-State 199
+State 180
 
    44 conditional_state: IF boolean_expr THEN state ELSE . state END IF
 
     '('     shift, and go to state 39
     SUB     shift, and go to state 40
-    NOT     shift, and go to state 41
     BEG     shift, and go to state 19
-    FALSE   shift, and go to state 42
+    FALSE   shift, and go to state 41
     FOR     shift, and go to state 75
     IF      shift, and go to state 76
     PRINT   shift, and go to state 77
     READ    shift, and go to state 78
-    TRUE    shift, and go to state 43
+    TRUE    shift, and go to state 42
     WHILE   shift, and go to state 79
-    OCT     shift, and go to state 44
+    OCT     shift, and go to state 43
     ID      shift, and go to state 80
-    INT     shift, and go to state 46
-    FLOAT   shift, and go to state 47
-    SCI     shift, and go to state 48
+    INT     shift, and go to state 45
+    FLOAT   shift, and go to state 46
+    SCI     shift, and go to state 47
     RETURN  shift, and go to state 81
 
     $default  reduce using rule 32 (state)
 
-    state              go to state 213
+    state              go to state 185
     func_invocation    go to state 83
     compound_state     go to state 84
     simple_state       go to state 85
@@ -3028,294 +2850,86 @@ State 199
     expr               go to state 90
 
 
-State 200
+State 181
 
    43 conditional_state: IF boolean_expr THEN state END . IF
 
-    IF  shift, and go to state 214
+    IF  shift, and go to state 186
 
 
-State 201
+State 182
 
    45 while_state: WHILE boolean_expr DO state END . DO
 
-    DO  shift, and go to state 215
+    DO  shift, and go to state 187
 
 
-State 202
-
-   33 func_invocation: ID '(' func ')' ';' .
-
-    $default  reduce using rule 33 (func_invocation)
-
-
-State 203
+State 183
 
    23 func_d: ID '(' func ')' ':' scalar_type ';' compound_state END . ID
 
-    ID  shift, and go to state 216
+    ID  shift, and go to state 188
 
 
-State 204
+State 184
 
    46 for_state: FOR ID ASSIGN INT TO INT . DO state END DO
 
-    DO  shift, and go to state 217
+    DO  shift, and go to state 189
 
 
-State 205
-
-   64 expr: expr . control expr
-   86 boolean_expr2: GT expr . boolean_expr2
-
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
-
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 218
-
-
-State 206
-
-   64 expr: expr . control expr
-   89 boolean_expr2: GE expr . boolean_expr2
-
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
-
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 219
-
-
-State 207
-
-   64 expr: expr . control expr
-   91 boolean_expr2: NE expr . boolean_expr2
-
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
-
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 220
-
-
-State 208
-
-   64 expr: expr . control expr
-   90 boolean_expr2: LE expr . boolean_expr2
-
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
-
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 221
-
-
-State 209
-
-   64 expr: expr . control expr
-   87 boolean_expr2: LT expr . boolean_expr2
-
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
-
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 222
-
-
-State 210
-
-   64 expr: expr . control expr
-   88 boolean_expr2: EQ expr . boolean_expr2
-
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
-
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 223
-
-
-State 211
-
-   64 expr: expr . control expr
-   92 boolean_expr2: AND expr . boolean_expr2
-
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
-
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 224
-
-
-State 212
-
-   64 expr: expr . control expr
-   93 boolean_expr2: OR expr . boolean_expr2
-
-    ADD  shift, and go to state 69
-    SUB  shift, and go to state 70
-    MUL  shift, and go to state 71
-    DIV  shift, and go to state 72
-    MOD  shift, and go to state 73
-    GT   shift, and go to state 183
-    GE   shift, and go to state 184
-    NE   shift, and go to state 185
-    LE   shift, and go to state 186
-    LT   shift, and go to state 187
-    EQ   shift, and go to state 188
-    AND  shift, and go to state 189
-    OR   shift, and go to state 190
-
-    $default  reduce using rule 94 (boolean_expr2)
-
-    control        go to state 74
-    boolean_expr2  go to state 225
-
-
-State 213
+State 185
 
    44 conditional_state: IF boolean_expr THEN state ELSE state . END IF
 
-    END  shift, and go to state 226
+    END  shift, and go to state 190
 
 
-State 214
+State 186
 
    43 conditional_state: IF boolean_expr THEN state END IF .
 
     $default  reduce using rule 43 (conditional_state)
 
 
-State 215
+State 187
 
    45 while_state: WHILE boolean_expr DO state END DO .
 
     $default  reduce using rule 45 (while_state)
 
 
-State 216
+State 188
 
    23 func_d: ID '(' func ')' ':' scalar_type ';' compound_state END ID .
 
     $default  reduce using rule 23 (func_d)
 
 
-State 217
+State 189
 
    46 for_state: FOR ID ASSIGN INT TO INT DO . state END DO
 
     '('     shift, and go to state 39
     SUB     shift, and go to state 40
-    NOT     shift, and go to state 41
     BEG     shift, and go to state 19
-    FALSE   shift, and go to state 42
+    FALSE   shift, and go to state 41
     FOR     shift, and go to state 75
     IF      shift, and go to state 76
     PRINT   shift, and go to state 77
     READ    shift, and go to state 78
-    TRUE    shift, and go to state 43
+    TRUE    shift, and go to state 42
     WHILE   shift, and go to state 79
-    OCT     shift, and go to state 44
+    OCT     shift, and go to state 43
     ID      shift, and go to state 80
-    INT     shift, and go to state 46
-    FLOAT   shift, and go to state 47
-    SCI     shift, and go to state 48
+    INT     shift, and go to state 45
+    FLOAT   shift, and go to state 46
+    SCI     shift, and go to state 47
     RETURN  shift, and go to state 81
 
     $default  reduce using rule 32 (state)
 
-    state              go to state 227
+    state              go to state 191
     func_invocation    go to state 83
     compound_state     go to state 84
     simple_state       go to state 85
@@ -3327,91 +2941,35 @@ State 217
     expr               go to state 90
 
 
-State 218
-
-   86 boolean_expr2: GT expr boolean_expr2 .
-
-    $default  reduce using rule 86 (boolean_expr2)
-
-
-State 219
-
-   89 boolean_expr2: GE expr boolean_expr2 .
-
-    $default  reduce using rule 89 (boolean_expr2)
-
-
-State 220
-
-   91 boolean_expr2: NE expr boolean_expr2 .
-
-    $default  reduce using rule 91 (boolean_expr2)
-
-
-State 221
-
-   90 boolean_expr2: LE expr boolean_expr2 .
-
-    $default  reduce using rule 90 (boolean_expr2)
-
-
-State 222
-
-   87 boolean_expr2: LT expr boolean_expr2 .
-
-    $default  reduce using rule 87 (boolean_expr2)
-
-
-State 223
-
-   88 boolean_expr2: EQ expr boolean_expr2 .
-
-    $default  reduce using rule 88 (boolean_expr2)
-
-
-State 224
-
-   92 boolean_expr2: AND expr boolean_expr2 .
-
-    $default  reduce using rule 92 (boolean_expr2)
-
-
-State 225
-
-   93 boolean_expr2: OR expr boolean_expr2 .
-
-    $default  reduce using rule 93 (boolean_expr2)
-
-
-State 226
+State 190
 
    44 conditional_state: IF boolean_expr THEN state ELSE state END . IF
 
-    IF  shift, and go to state 228
+    IF  shift, and go to state 192
 
 
-State 227
+State 191
 
    46 for_state: FOR ID ASSIGN INT TO INT DO state . END DO
 
-    END  shift, and go to state 229
+    END  shift, and go to state 193
 
 
-State 228
+State 192
 
    44 conditional_state: IF boolean_expr THEN state ELSE state END IF .
 
     $default  reduce using rule 44 (conditional_state)
 
 
-State 229
+State 193
 
    46 for_state: FOR ID ASSIGN INT TO INT DO state END . DO
 
-    DO  shift, and go to state 230
+    DO  shift, and go to state 194
 
 
-State 230
+State 194
 
    46 for_state: FOR ID ASSIGN INT TO INT DO state END DO .
 

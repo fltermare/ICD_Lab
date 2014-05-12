@@ -44,6 +44,7 @@ literal_constant    : INT
                     | FALSE
                     | TRUE
                     ;
+
 function    : func_d function
             | func_p function
             |
@@ -53,7 +54,6 @@ func_d      : ID '(' func ')' ':' scalar_type ';' compound_state END ID
             ;
 
 func_p      : ID '(' func ')' ';' compound_state END ID
-            | ID '(' func ')' ';'
             ;
 
 state   : compound_state state 
@@ -62,18 +62,18 @@ state   : compound_state state
         | while_state state
         | for_state state
         | return_state state
-        | func_invocation state
+        | func_invocation ';' state
         | 
         ;
 
-func_invocation     : ID '(' func ')' ';' 
+func_invocation     : ID '(' func ')' 
                     ;
 
 compound_state      : BEG var_d state END
                     ;
 
 simple_state        : ID ASSIGN boolean_expr ';'
-                    | expr ASSIGN boolean_expr ';' 
+                    | expr ASSIGN expr ';' 
                     | PRINT ID ';'
                     | PRINT expr ';'
                     | PRINT str ';'
@@ -98,7 +98,7 @@ return_state        : RETURN boolean_expr ';'
 
 func    : id_list ':' scalar_type ';' func
         | id_list ':' scalar_type
-        | expr 
+        | expr_f 
         |
         ;
 
@@ -115,17 +115,12 @@ control : ADD
         | MOD
         ;
 
-expr    : SUB num
-        | SUB expr
-        | NOT expr
+expr    : SUB expr
         | expr control expr
-//        | '(' expr ')' control '(' expr ')'
-//        | '(' expr ')' control num
-//        | expr control '(' expr ')'
         | '(' expr ')'
         | num
         | ID
-        | ID '(' expr_f ')'
+        | func_invocation 
         | ID bracket
         | TRUE
         | FALSE
@@ -140,26 +135,16 @@ expr_f  : expr ',' expr_f
         ;
 
 boolean_expr	: '(' boolean_expr ')'
-                | expr GT expr boolean_expr2
-                | expr LT expr boolean_expr2
-                | expr EQ expr boolean_expr2
-                | expr GE expr boolean_expr2
-                | expr LE expr boolean_expr2
-                | expr NE expr boolean_expr2  
-                | expr AND expr boolean_expr2
-                | expr OR expr boolean_expr2
+                | boolean_expr GT boolean_expr 
+                | boolean_expr LT boolean_expr
+                | boolean_expr EQ boolean_expr
+                | boolean_expr GE boolean_expr 
+                | boolean_expr LE boolean_expr 
+                | boolean_expr NE boolean_expr 
+                | boolean_expr AND boolean_expr
+                | boolean_expr OR boolean_expr 
+                | NOT boolean_expr 
                 | expr
-                ;
-
-boolean_expr2   : GT expr boolean_expr2
-                | LT expr boolean_expr2
-                | EQ expr boolean_expr2
-                | GE expr boolean_expr2
-                | LE expr boolean_expr2 
-                | NE expr boolean_expr2 
-                | AND expr boolean_expr2 
-                | OR expr boolean_expr2
-                |
                 ;
 
 str	    : BS str_c BSSS
