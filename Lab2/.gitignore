@@ -1,5 +1,4 @@
 *.tar
-*.p
 *.sh
 diff_result
 00*
