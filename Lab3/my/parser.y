@@ -11,9 +11,15 @@ extern FILE *yyin;		/* declared by lex */
 extern char *yytext;	/* declared by lex */
 extern char buf[256];	/* declared in lex.l */
 
+
+///////**flag
 int level_flag = 0;     /* indicate which level */
+int global_flag = 0;
+char* id_flag;
+int func_type = 0;      /* in func_del   0 no : 1 yes*/
+int func_para = 0;      /* in func_del   0 no : 1 yes*/
 
-
+///////
 ///////**symbol table
 struct symrec
 {
@@ -35,13 +41,13 @@ struct symtable
 
 typedef struct symrec symrec;
 typedef struct symtable symtable;
-symtable *sym_table = (symtable*) 0;
-//symrec *sym_entry = (symrec*) 0;
+symtable* sym_table = (symtable*) 0;
 
+//symrec *sym_entry = (symrec*) 0;
 //symtable *sym_current_table;
 //sym_current_table = sym_table;
 
-symtable *newsymtable()
+int newsymtable()
 {
     symtable *ptr;
     ptr = (symtable*) malloc(sizeof(symtable));
@@ -54,10 +60,10 @@ symtable *newsymtable()
 
     /*assing sym_table to new postion*/
     sym_table = ptr;
-    return ptr;
+    return 0;
 }
 
-int *delsymtable( symtable *sym_table)
+int delsymtable()
 {
     /*free entry*/
     symrec *ptr;
@@ -78,15 +84,15 @@ int *delsymtable( symtable *sym_table)
     sym_table = sym_table->next_table;
     free(tmp->entry);
     free(tmp);
-    return 1;
+    return 0;
 }
 
 symrec *pushsym( char* sym_name, int sym_level, char* sym_kind, char* sym_type, char* sym_attribute)
 {
-    printf("[pushsym]\n");
+    //printf("[pushsym]\n");
 
     symrec *ptr;
-    
+    /*malloc*/ 
     ptr = (symrec*) malloc(sizeof(symrec));
     ptr->name = (char*) malloc(strlen(sym_name)+1);
     ptr->kind = (char*) malloc(strlen(sym_kind)+1);
@@ -101,22 +107,23 @@ symrec *pushsym( char* sym_name, int sym_level, char* sym_kind, char* sym_type, 
     ptr->level = sym_level;
 
     symrec *tmp;
-    printf("[pushsym] finished\n");
     tmp = sym_table->entry;
     sym_table->entry = ptr;
     ptr->next = tmp;
      
+    //printf("[pushsym] finished\n");
     return ptr;
 }
 
 symrec *getsym( char* sym_name)
 {
+    //printf("[getsym]\n");
     symtable *ptr_t;
     symrec *ptr;
     
     /* go through every table and entry */
     for(ptr_t = sym_table; ptr_t != (symtable*) 0; ptr_t = ptr_t->next_table)
-        for(ptr = ptr_t->entry; ptr != (symrec*) 0; ptr = ptr_t->entry->next)
+        for(ptr = ptr_t->entry; ptr != (symrec*) 0; ptr = ptr->next)
             if(strcmp(ptr->name, sym_name) == 0)
                 return ptr;
     /* not found */
@@ -127,7 +134,7 @@ symrec *getsym( char* sym_name)
 ///////**API
 install( char* sym_name, int sym_level, char* sym_kind, char* sym_type, char* sym_attribute)
 {
-    printf("[install]\n");
+    //printf("[install]\n");
     
     symrec* s;
     s = getsym(sym_name);
@@ -136,17 +143,29 @@ install( char* sym_name, int sym_level, char* sym_kind, char* sym_type, char* sy
     else {
         yyerror("variable 'blabla' redeclared");        
     }
+    //printf("[install] finish\n");
 }
 
+update_type( char* sym_name, char* sym_type)
+{
+    //printf("[update]\n");
+
+    symrec* s;
+    s = getsym(sym_name);
+    if(s == 0)
+        printf("!!!ERROR - UPDATE_TYPE!!!\n");
+    else
+        strcpy(s->type, sym_type);
+}
 context_check( char* sym_name)
 {
     if(getsym( sym_name) == 0)
         printf("%s is an undeclared identifier\n", sym_name);
 }
 
-void dumpsymbol( symtable* sym_table)
+void dumpsymbol()
 {
-    printf("[dumpsymbol]\n");
+   // printf("[dumpsymbol]\n");
     
     int i;
     printf("%-32s\t%-11s\t%-11s\t%-17s\t%-11s\t\n","Name","Kind","Level","Type","Attribute");
@@ -246,18 +265,25 @@ void dumpsymbol( symtable* sym_table)
 %start program
 %%
 
-program		: ID MK_SEMICOLON 
+program     : ID MK_SEMICOLON 
+                {
+                    newsymtable();
+                    install($1, level_flag, "program", "void", "");
+                    //printf("[name]: %s\n", sym_table->entry->name);
+                    printf("level : %d\n", level_flag);
+                }
 			  program_body
 			  END ID
-              {
-                sym_table = newsymtable();
-                install($1, level_flag, "program", "void", " ");
-                dumpsymbol(sym_table);
-                delsymtable(sym_table);
-              }
+                {
+                    dumpsymbol();
+                    delsymtable();
+                    printf("level : %d\n", level_flag);
+                }
 			;
 
-program_body    : opt_decl_list opt_func_decl_list compound_stmt
+program_body    : opt_decl_list 
+                  opt_func_decl_list 
+                  compound_stmt 
 			    ;
 
 opt_decl_list   : decl_list
@@ -272,6 +298,7 @@ decl		: VAR id_list MK_COLON scalar_type MK_SEMICOLON       /* scalar type decla
 			| VAR id_list MK_COLON array_type MK_SEMICOLON        /* array type declaration */
 			| VAR id_list MK_COLON literal_const MK_SEMICOLON     /* const declaration */
 			;
+
 int_const	:	INT_CONST
 			|	OCTAL_CONST
 			;
@@ -295,14 +322,34 @@ func_decl_list		: func_decl_list func_decl
 	        		| func_decl
         			;
 
-func_decl	: ID MK_LPAREN opt_param_list MK_RPAREN opt_type MK_SEMICOLON
+func_decl	: ID MK_LPAREN 
+                {
+                    id_flag = $1;
+                    install($1, level_flag, "function", "", "");
+                    printf("[name]: %s\n", sym_table->entry->name);
+                    newsymtable();
+                    printf("level : %d\n", level_flag);
+                    level_flag++;
+                    func_type = 1;
+                    func_para = 1;
+                }
+              opt_param_list
+                {
+                    func_para = 0;
+                }
+              MK_RPAREN opt_type MK_SEMICOLON
+                {
+                    func_type = 0;
+                }
 			  compound_stmt
 			  END ID
-              {
-                install($1, level_flag, "function", " ", " ");
-                //dumpsymbol(sym_table);
-                //delsymtable(sym_table);
-              }
+                {
+                    printf("END ID: %s\n", $12);
+                    dumpsymbol();
+                    delsymtable();
+                    level_flag--;
+                    printf("level : %d\n", level_flag);
+                }
 			;
 
 opt_param_list	: param_list
@@ -316,9 +363,21 @@ param_list	: param_list MK_SEMICOLON param
 param		: id_list MK_COLON type
 			;
 
-id_list		: id_list MK_COMMA ID
-			| ID
-			;
+id_list		: id_list MK_COMMA ID 
+                {
+                    if(func_para) {
+                        install($3, level_flag, "parameter", "", "");
+                        printf("[para]: %s\n", sym_table->entry->name);
+                    }
+                }
+			| ID 
+                {
+                    if(func_para) {
+                        install($1, level_flag, "parameter", "", "");
+                        printf("[para]: %s\n", sym_table->entry->name);
+                    }
+                }
+            ;
 
 opt_type	: MK_COLON type
 			| /* epsilon */
@@ -328,7 +387,13 @@ type		: scalar_type
 			| array_type
 			;
 
-scalar_type	: INTEGER
+scalar_type	: INTEGER 
+                { 
+                    if(func_type) {
+                        //printf("\n[%s]\n\n", id_flag);
+                        update_type(id_flag, "integer");
+                    }
+                }
 			| REAL
 			| BOOLEAN
 			| STRING
@@ -337,13 +402,13 @@ scalar_type	: INTEGER
 array_type	: ARRAY int_const TO int_const OF type
 			;
 
-stmt		: compound_stmt
-			| simple_stmt
-			| cond_stmt
-			| while_stmt
-			| for_stmt
-			| return_stmt
-			| proc_call_stmt
+stmt		: compound_stmt 
+			| simple_stmt 
+			| cond_stmt 
+			| while_stmt 
+			| for_stmt 
+			| return_stmt 
+			| proc_call_stmt 
 			;
 
 compound_stmt   : BEG
@@ -429,25 +494,25 @@ add_op      : OP_ADD
             | OP_SUB
             ;
 
-term			: term mul_op factor
+term        : term mul_op factor
 			| factor
 			;
 
-mul_op			: OP_MUL
+mul_op      : OP_MUL
 			| OP_DIV
 			| OP_MOD
 			;
 
-factor			: var_ref
+factor      : var_ref
 			| OP_SUB var_ref
 			| MK_LPAREN boolean_expr MK_RPAREN
 			| OP_SUB MK_LPAREN boolean_expr MK_RPAREN
 			| ID MK_LPAREN opt_boolean_expr_list MK_RPAREN
 			| OP_SUB ID MK_LPAREN opt_boolean_expr_list MK_RPAREN
-			| literal_const
+            | literal_const
 			;
 
-var_ref			: ID
+var_ref		: ID 
 			| var_ref dim
 			;
 
