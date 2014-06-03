@@ -16,9 +16,9 @@ extern char buf[256];	/* declared in lex.l */
 int level_flag = 0;     /* indicate which level */
 int global_flag = 0;
 char* id_flag;
-int func_type = 0;      /* in func_del   0 no : 1 yes*/
-int func_para = 0;      /* in func_del   0 no : 1 yes*/
-
+int func_type = 0;      /* in func_del  0 no : 1 yes*/
+int func_para = 0;      /* in func_del  0 no : 1 yes*/
+int func_comp = 0;      /* in func_del  0 no : 1 yes*/
 ///////
 ///////**symbol table
 struct symrec
@@ -325,13 +325,14 @@ func_decl_list		: func_decl_list func_decl
 func_decl	: ID MK_LPAREN 
                 {
                     id_flag = $1;
-                    install($1, level_flag, "function", "", "");
+                    install($1, level_flag, "function", "        ", "       ");
                     printf("[name]: %s\n", sym_table->entry->name);
                     newsymtable();
                     printf("level : %d\n", level_flag);
                     level_flag++;
                     func_type = 1;
                     func_para = 1;
+                    func_comp = 1;
                 }
               opt_param_list
                 {
@@ -366,14 +367,14 @@ param		: id_list MK_COLON type
 id_list		: id_list MK_COMMA ID 
                 {
                     if(func_para) {
-                        install($3, level_flag, "parameter", "", "");
+                        install($3, level_flag, "parameter", "        ", "        ");
                         printf("[para]: %s\n", sym_table->entry->name);
                     }
                 }
 			| ID 
                 {
                     if(func_para) {
-                        install($1, level_flag, "parameter", "", "");
+                        install($1, level_flag, "parameter", "        ", "        ");
                         printf("[para]: %s\n", sym_table->entry->name);
                     }
                 }
@@ -411,10 +412,19 @@ stmt		: compound_stmt
 			| proc_call_stmt 
 			;
 
-compound_stmt   : BEG
+compound_stmt   : BEG 
+                    {
+                        level_flag++;
+                        newsymtable();    
+                    }
                   opt_decl_list
     			  opt_stmt_list
                   END
+                    {
+                        dumpsymbol();
+                        delsymtable();
+                        level_flag--;
+                    }
                 ;
 
 opt_stmt_list   : stmt_list
