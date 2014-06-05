@@ -22,7 +22,7 @@
 int Opt_S = 1;				/* list source code option */
 int Opt_T = 1;				/* list token option */
 ///lab3 dump
-int Opt_D = 0;
+int Opt_D = 1;
 ///
 int linenum = 1;			/* line number */
 char buf[MAX_LINE_LENG];		/* source code line buffer */
@@ -129,6 +129,7 @@ identifier ({letter})({letter}|{digit})*
 						printf("<%s: %s>\n", "string", strContent );
 					memset( strContent, 0, MAX_LINE_LENG );	// clear strContent
 				  	BEGIN INITIAL;
+                    yylval.stringValue = strdup(yytext);
 					return STR_CONST;
 				  }
 				}
