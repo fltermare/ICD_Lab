@@ -27,6 +27,10 @@ int is_array = 0;       // is array or not
 int array_order = 0;    // which array element
 int a_f = 0;            // first array int_const
 int a_s = 0;            // second array int_const
+char lhs_type[20];         // type of left hand side
+char rhs_type[20];         // type of right hand side
+int is_op = 0;          // in operation or not
+int is_const = 0;       // lhs is const (kind)
 ///////
 ///////**symbol table
 struct symrec
@@ -166,20 +170,6 @@ symrec* searchsym( char* sym_name, int sym_level)
         }
         ptrr = ptrr->next_table;
     }
-   /* 
-    for(ptrr = sym_table; ptrr->symtable_level == tmp; ptrr = ptrr->next_table) {
-        for(ptr = ptrr->entry; ptr != (symrec*) 0; ptr = ptr->next) {
-            if(strcmp(ptr->name, sym_name) == 0) {
-                return ptr;
-            }
-        }
-    }
-    
-    
-    for(ptr = sym_table->entry; ptr != (symrec*) 0; ptr = ptr->next)
-        if(strcmp(ptr->name, sym_name) == 0)
-            return ptr;
-    */
 
     // not found
     return 0;
@@ -193,10 +183,10 @@ install( char* sym_name, int sym_level, char* sym_kind, char* sym_type, char* sy
     
     symrec* s;
     s = searchsym(sym_name, sym_level);
-    if(s == 0)
+    if(s == 0) {
         s = pushsym(sym_name, sym_level, sym_kind, sym_type, sym_attribute);
-    else {
-        yyerror("variable 'sym_name' redeclared");        
+    } else {
+        printf("[Error] : variable 'sym_name' redeclared\n");        
     }
     //printf("[install] finish\n");
 }
@@ -307,7 +297,8 @@ update_attr( char* sym_name, int sym_level, char* sym_attribute, int paranum)
             if (strcmp(s->attribute, emp) == 0) {
                 strcpy(s->attribute, sym_attribute);
             } else {
-                strcpy((s->attribute)+i, sym_attribute);
+                *(s->attribute+i) = ',';
+                strcpy((s->attribute)+i+1, sym_attribute);
             }
         }
     }
@@ -337,7 +328,8 @@ update_attr_array( char* sym_func_name, char* sym_array_name, int sym_level, int
             if (strcmp(s->attribute, emp) == 0) {
                 strcpy(s->attribute, a->type);
             } else {
-                strcpy((s->attribute)+i, a->type);
+                *(s->attribute+i) = ',';
+                strcpy((s->attribute)+i+1, a->type);
             }
         }
     }
@@ -389,6 +381,21 @@ update_decl_const_str(int sym_level, char* sym_kind, char* sym_type, char* strin
         s = s->next;
     }
 }
+
+char* getsymtype(char* sym_name, int side) {
+    symrec* s;
+    s = getsym(sym_name);
+    if(s == 0) {
+        printf("ERROR getsymtype\n");
+    } else {
+        char* tmp = "constant";
+        if(side == 1 && strcmp(s->kind, tmp) == 0)
+            is_const = 1;
+        return s->type;
+    }
+    
+}
+
 context_check( char* sym_name)
 {
     if(getsym( sym_name) == 0)
@@ -558,6 +565,13 @@ int_const   : INT_CONST
                     } else {
                         update_decl_const_number(level_flag, "constant", "integer", $1);
                     }
+
+                    if(is_op) {
+                        printf("in int_const\n");
+                        strcpy(rhs_type, "integer");  
+                        printf("in int_const\n");
+                    }
+
                 }
             | OCTAL_CONST
                 { 
@@ -616,7 +630,7 @@ func_decl	: ID MK_LPAREN
                 {
                     func_type = 0;
                 }
-			  compound_stmt
+              compound_stmt
 			  END ID
                 {
                     if(func_comp == 1) {
@@ -710,7 +724,7 @@ scalar_type	: INTEGER
                                 update_array_type_p2(id_current, level_flag, "integer");
                                 update_attr_array(id_flag, id_current, level_flag, para_num);
                             } else {
-                                update_attr(id_flag, level_flag, " integer", para_num);
+                                update_attr(id_flag, level_flag, "integer", para_num);
                             }
                         } else {
                             if(is_array) {
@@ -734,7 +748,7 @@ scalar_type	: INTEGER
                                 update_array_type_p2(id_current, level_flag, "real");
                                 update_attr_array(id_flag, id_current, level_flag, para_num);
                             } else {
-                                update_attr(id_flag, level_flag, " real", para_num);
+                                update_attr(id_flag, level_flag, "real", para_num);
                             }
                         } else {
                             if(is_array) {
@@ -758,7 +772,7 @@ scalar_type	: INTEGER
                                 update_array_type_p2(id_current, level_flag, "boolean");
                                 update_attr_array(id_flag, id_current, level_flag, para_num);
                             } else {
-                                update_attr(id_flag, level_flag, " boolean", para_num);
+                                update_attr(id_flag, level_flag, "boolean", para_num);
                             }
                         } else {
                             if(is_array) {
@@ -782,7 +796,7 @@ scalar_type	: INTEGER
                                 update_array_type_p2(id_current, level_flag, "string");
                                 update_attr_array(id_flag, id_current, level_flag, para_num);
                             } else {
-                                update_attr(id_flag, level_flag, " string", para_num);
+                                update_attr(id_flag, level_flag, "string", para_num);
                             }
                         } else {
                             if(is_array) {
@@ -806,7 +820,7 @@ array_type	:   {
                 {
                     array_order = 0;
                     if(a_f > a_s)
-                        yyerror("array int_constant error\n");
+                        printf("[Error] : array int_constant error\n");
                     if(func_type) {
                         update_array_type_func_1(id_flag, level_flag, a_s-a_f+1);
                     } else {
@@ -855,7 +869,21 @@ stmt_list	: stmt_list stmt
 			| stmt
 			;
 
-simple_stmt	: var_ref OP_ASSIGN boolean_expr MK_SEMICOLON
+simple_stmt	: var_ref OP_ASSIGN {is_op = 1;} 
+              boolean_expr 
+                {
+                    
+                    if(is_const) {
+                        printf("[Error] : constant cannot be assigned\n");
+                    } else {
+                        if(strcmp(lhs_type, rhs_type) != 0)
+                            printf("[Error] : return type inconsistent\n");
+                    }
+                    
+                    is_const = 0;
+                    is_op = 0;
+                } 
+              MK_SEMICOLON
 			| PRINT boolean_expr MK_SEMICOLON
 			| READ boolean_expr MK_SEMICOLON
 			;
@@ -937,12 +965,30 @@ factor      : var_ref
 			| OP_SUB var_ref
 			| MK_LPAREN boolean_expr MK_RPAREN
 			| OP_SUB MK_LPAREN boolean_expr MK_RPAREN
-			| ID MK_LPAREN opt_boolean_expr_list MK_RPAREN
+			| ID 
+                {
+                    strcpy(rhs_type, getsymtype($1, 2));
+                    //printf("[rhs] %s\n", rhs_type);
+                } 
+              MK_LPAREN opt_boolean_expr_list MK_RPAREN
+                {
+
+                }
 			| OP_SUB ID MK_LPAREN opt_boolean_expr_list MK_RPAREN
             | literal_const
 			;
 
 var_ref		: ID 
+                { 
+                    if(is_op) {
+                        strcpy(rhs_type, getsymtype($1, 2));
+                        //printf("[rhs] %s\n", rhs_type);
+                    } else {
+                        strcpy(lhs_type, getsymtype($1, 1));
+                        //printf("[lhs] %s\n", lhs_type);
+                        //printf("%d\n", is_const);
+                    }
+                } 
 			| var_ref dim
 			;
 
