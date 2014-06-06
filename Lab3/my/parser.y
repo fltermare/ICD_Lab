@@ -31,6 +31,10 @@ char lhs_type[20];         // type of left hand side
 char rhs_type[20];         // type of right hand side
 int is_op = 0;          // in operation or not
 int is_const = 0;       // lhs is const (kind)
+int check_func_para = 0;    //error detection
+int check_func_pnum = 0;
+char* check_func_ptype;
+int mul = 0;
 ///////
 ///////**symbol table
 struct symrec
@@ -77,8 +81,8 @@ int newsymtable(int level_f)
 
 int delsymtable(int level_f)
 {
-    printf("[level_f] : %d\n", level_f);
-    printf("[sym level] : %d\n", sym_table->symtable_level);
+   // printf("[level_f] : %d\n", level_f);
+    //printf("[sym level] : %d\n", sym_table->symtable_level);
     
     while(sym_table != (symtable*)0 && sym_table->symtable_level == level_f) {
         // free entry
@@ -94,7 +98,7 @@ int delsymtable(int level_f)
            free(tmp);
         }
     
-        printf("[delsymtable - test]\n");
+        //printf("[delsymtable - test]\n");
 
         // free table 
         symtable *tmp1;
@@ -197,11 +201,12 @@ update_type( char* sym_name, int sym_level, char* sym_type)
 
     symrec* s;
     s = getsym(sym_name);
-    if(s == 0)
+    if(s == 0) {
         printf("!!!ERROR - UPDATE_TYPE!!!\n");
-    else
-        printf("name: %s, level: %d\n", s->name, s->level);
+    } else {
+        //printf("name: %s, level: %d\n", s->name, s->level);
         strcpy(s->type, sym_type);
+    }
 }
 update_array_type_func_1( char* sym_name, int sym_level, int elements)  //update func_type (for array) part1
 {
@@ -216,9 +221,9 @@ update_array_type_func_1( char* sym_name, int sym_level, int elements)  //update
     if(s == 0) {
         printf("!!!ERROR - UPDATE_ARRAY_TYPE_0!!!\n");
     } else {
-        printf("name: %s, level: %d\n", s->name, s->level);
+        //printf("name: %s, level: %d\n", s->name, s->level);
         strcpy(s->type, attr);
-        printf("[update] %s to %s\n", s->name, s->type);
+        //printf("[update] %s to %s\n", s->name, s->type);
     }
 }
 
@@ -233,7 +238,7 @@ update_array_type_func_2( char* sym_name, int sym_level, char* sym_type)  //udpa
     if(s == 0) {
         printf("!!!ERROR - UPDATE_ARRAY_TYPE_0!!!\n");
     } else {
-        printf("name: %s, level: %d\n", s->name, s->level);
+        //printf("name: %s, level: %d\n", s->name, s->level);
         strcpy(tmp, sym_type);
         strcpy(tmp+strlen(tmp), s->type); 
         strcpy(s->type, tmp);
@@ -245,14 +250,22 @@ update_array_type_p1( char* sym_name, int sym_level, int elements)      //update
 
     symrec* s;
     s = sym_table->entry;
-    char attr[10] = {0};
+    char attr[20] = {0};
     attr[0] = '[';
     sprintf(attr+1, "%d]", elements);
     char* emp = "___empty___";
     while(s != (symrec*) 0) {
+         
+        
+        if(*(s->type) == '[') {
+            int length;
+            length = strlen(s->type);
+            //printf("%s  %d\n", s->type, length);
+            strcpy(s->type+length, attr);
+        }    
         if(strcmp(emp, s->type) == 0) {
             strcpy(s->type, attr);
-            printf("[update] %s to %s\n", s->name, s->type);
+            //printf("[update] %s to %s\n", s->name, s->type);
         }
         s = s->next;
     }
@@ -279,7 +292,7 @@ update_array_type_p2( char* sym_name, int sym_level, char* sym_type)    //update
 
 update_attr( char* sym_name, int sym_level, char* sym_attribute, int paranum)
 {
-    printf("[update_attribute]\n");
+    //printf("[update_attribute]\n");
 
     symrec* s;
     s = getsym(sym_name);
@@ -288,12 +301,12 @@ update_attr( char* sym_name, int sym_level, char* sym_attribute, int paranum)
     for(j = 0; j < paranum; ++j) {
         i = strlen(s->attribute);
     
-        printf("%s\n", s->attribute);
-        printf("sizeof attribute: %d\n", i); 
+        //printf("%s\n", s->attribute);
+        //printf("sizeof attribute: %d\n", i); 
         if(s == 0) {
             printf("!!!ERROR - UPDATE_ATTR!!!\n");
         } else {
-            printf("name: %s, level: %d\n", s->name, s->level);
+            //printf("name: %s, level: %d\n", s->name, s->level);
             if (strcmp(s->attribute, emp) == 0) {
                 strcpy(s->attribute, sym_attribute);
             } else {
@@ -306,7 +319,7 @@ update_attr( char* sym_name, int sym_level, char* sym_attribute, int paranum)
 
 update_attr_array( char* sym_func_name, char* sym_array_name, int sym_level, int paranum)
 {
-    printf("[update_attribute array version]\n");
+    //printf("[update_attribute array version]\n");
 
     symrec* s;
     symrec* a;
@@ -318,13 +331,13 @@ update_attr_array( char* sym_func_name, char* sym_array_name, int sym_level, int
     for(j = 0; j < paranum; ++j) {
         i = strlen(s->attribute);
     
-        printf("%s\n", s->attribute);
-        printf("sizeof attribute: %d\n", i); 
+        //printf("%s\n", s->attribute);
+        //printf("sizeof attribute: %d\n", i); 
         
         if(s == 0) {
             printf("!!!ERROR - UPDATE_ATTR!!!\n");
         } else {
-            printf("name: %s, level: %d\n", s->name, s->level);
+            //printf("name: %s, level: %d\n", s->name, s->level);
             if (strcmp(s->attribute, emp) == 0) {
                 strcpy(s->attribute, a->type);
             } else {
@@ -396,10 +409,110 @@ char* getsymtype(char* sym_name, int side) {
     
 }
 
+int get_pnum(char* func_name) {
+    //get number of function parameters
+    symrec* s;
+    s = getsym(func_name);
+    if(s == 0) {
+        printf("[Error] : function undeclared \n");
+    } else {
+        int num, i;
+        int length;
+        num = 0;
+        length = strlen(s->attribute);
+        for(i = 0; i < length; ++i) {
+            if(*(s->attribute+i) == ',')
+                num++;
+        }
+        if(num == 0) { 
+            if(*(s->attribute) =='_')
+                return 0;
+            else 
+                return 1;
+        } else {
+            return num+1;
+        }
+    }
+}
+
+int check_ptype(char* func_name, int order, char* para_name) {
+    //chek type of function parameters
+    symrec* s;
+    s = getsym(func_name);
+    if(s == 0) {
+        printf("[Error] : function undeclared \n");
+    } else {
+        char tmp[20];
+        int i;
+        int j, k;
+        int length;
+        length = strlen(s->attribute);
+        i = 0;
+        k = 0;
+               
+        for(j = 0; j < order; ++j) {
+            while(*(s->attribute+i) != ',' && i < length) {
+                strncpy(tmp+k, s->attribute+i, 1);
+                k++;
+                i++;
+            }
+            i++;
+            k = 0;
+        }
+        s = getsym(para_name); 
+       // printf("%s\n", tmp);
+       // printf("%s\n", s->type);
+        if(strcmp(tmp, s->type) == 0)
+            return 1;
+        else 
+            return 0;
+
+    }
+}
+
+int check_ptype_s(char* func_name, int order, char* para_type) {
+    //chek type of function parameters
+     
+
+    symrec* s;
+    s = getsym(func_name);
+    if(s == 0) {
+        printf("[Error] : function undeclared \n");
+        return 0;
+    } else {
+        char tmp[30];
+        int i;
+        int j, k;
+        int length;
+
+        length = strlen(s->attribute);
+        i = 0;
+        k = 0;
+//    printf("in check_ptype_s  order:%d\n", order);
+//    printf("in check_ptype_s  length:%d\n", length);
+        
+        for(j = 0; j < order; ++j) {
+            while(*(s->attribute+i) != ',' && i < length) {
+                tmp[k++] = *(s->attribute+i);
+                i++;
+            }
+            i++;
+            k = 0;
+        }
+        
+//    printf("in check_ptype_s  tmp:%s\n", tmp);
+        if(strcmp(tmp, para_type) == 0)
+            return 1;
+        else 
+            return 0;
+
+    }
+}
+
 context_check( char* sym_name)
 {
     if(getsym( sym_name) == 0)
-        printf("%s is an undeclared identifier\n", sym_name);
+        printf("[Error] : %s is an undeclared identifier\n", sym_name);
 }
 
 void dumpsymbol(int level_f)
@@ -525,14 +638,14 @@ program     : ID MK_SEMICOLON
                     newsymtable(level_flag);
                     install($1, level_flag, "program", "void", "");
                     //printf("[name]: %s\n", sym_table->entry->name);
-                    printf("level : %d\n", level_flag);
+                    //printf("level : %d\n", level_flag);
                 }
 			  program_body
 			  END ID
                 {
                     dumpsymbol(level_flag);
                     delsymtable(level_flag);
-                    printf("level : %d\n", level_flag);
+                    //printf("level : %d\n", level_flag);
                 }
 			;
 
@@ -567,9 +680,18 @@ int_const   : INT_CONST
                     }
 
                     if(is_op) {
-                        printf("in int_const\n");
+                       // printf("in int_const\n");
                         strcpy(rhs_type, "integer");  
-                        printf("in int_const\n");
+                       // printf("in int_const\n");
+                    }
+
+                    if(check_func_para) {
+                        check_func_pnum++;
+                        
+                        if(!check_ptype_s(id_flag, check_func_pnum, "integer")) {
+                            printf("[Error] : parameter type inconsistent\n");
+                        }
+                        
                     }
 
                 }
@@ -595,9 +717,12 @@ literal_const		: int_const
                     | STR_CONST 
                         {
                             update_decl_const_str(level_flag, "constant", "string", $1);
+                            if(is_op) {
+                                strcpy(rhs_type, "string");  
+                            }
                         }
-                    | TRUE
-                    | FALSE
+                    | TRUE {if(is_op) strcpy(rhs_type, "boolean");}
+                    | FALSE {if(is_op) strcpy(rhs_type, "boolean");}
                     ;
 
 opt_func_decl_list	: func_decl_list
@@ -613,9 +738,9 @@ func_decl	: ID MK_LPAREN
                     id_flag = $1;
                     install($1, level_flag, "function", "___empty___", "___empty___");
                     //dumpsymbol(level_flag);
-                    printf("[name]: %s\n", sym_table->entry->name);
+                   // printf("[name]: %s\n", sym_table->entry->name);
                     newsymtable(level_flag+1);
-                    printf("level : %d\n", level_flag);
+                   // printf("level : %d\n", level_flag);
                     func_para = 1;
                     decl_type = 1;
                     func_comp = 1;
@@ -636,13 +761,13 @@ func_decl	: ID MK_LPAREN
                     if(func_comp == 1) {
                        dumpsymbol(level_flag);
                        delsymtable(level_flag);
-                       printf("level : %d\n", level_flag);
+                       //printf("level : %d\n", level_flag);
                        level_flag--;
                        func_comp = 0;
                     } else {
                         printf("!!ERROR-func_comp!!\n");
                     }
-                    printf("level : %d\n", level_flag);
+                    //printf("level : %d\n", level_flag);
                 }
 			;
 
@@ -659,8 +784,8 @@ param		: {para_num = 0;} id_list MK_COLON type {para_num = 0;}
 
 id_list		: id_list MK_COMMA ID 
                 {
-                    printf("[func_para]: %d\n", func_para);
-                    printf("[id_decl_type] = %d\n", decl_type);
+                    //printf("[func_para]: %d\n", func_para);
+                    //printf("[id_decl_type] = %d\n", decl_type);
                      
                     if(decl_type == 1) {
 
@@ -669,11 +794,11 @@ id_list		: id_list MK_COMMA ID
                         if(func_para == 1) {
                             para_num++;
                             install($3, level_flag+1, "parameter", "___empty___", "___empty___");
-                            printf("[para]: %s\n", sym_table->entry->name);
+                            //printf("[para]: %s\n", sym_table->entry->name);
                            // dumpsymbol(level_flag+1);
                         } else {
                             install($3, level_flag, "variable", "___empty___", "___empty___");
-                            printf("[vari]: %s\n", sym_table->entry->name);
+                            //printf("[vari]: %s\n", sym_table->entry->name);
                            // dumpsymbol(level_flag);
                         }
                     }
@@ -681,8 +806,8 @@ id_list		: id_list MK_COMMA ID
                 }
 			| ID 
                 {
-                    printf("[func_para]: %d\n", func_para);
-                    printf("[id_decl_type] = %d\n", decl_type);
+                    //printf("[func_para]: %d\n", func_para);
+                    //printf("[id_decl_type] = %d\n", decl_type);
                     
                     if(decl_type == 1) {
                         
@@ -691,11 +816,11 @@ id_list		: id_list MK_COMMA ID
                         if(func_para == 1) {
                             para_num++;
                             install($1, level_flag+1, "parameter", "___empty___", "___empty___");
-                            printf("[para]: %s\n", sym_table->entry->name);
+                            //printf("[para]: %s\n", sym_table->entry->name);
                            // dumpsymbol(level_flag+1);
                         } else {
                             install($1, level_flag, "variable", "___empty___", "___empty___");
-                            printf("[vari]: %s\n", sym_table->entry->name);
+                            //printf("[vari]: %s\n", sym_table->entry->name);
                            // dumpsymbol(level_flag);
                         }
                     }
@@ -872,14 +997,47 @@ stmt_list	: stmt_list stmt
 simple_stmt	: var_ref OP_ASSIGN {is_op = 1;} 
               boolean_expr 
                 {
-                    
+                   /* 
+                            printf("l: %s\n",lhs_type);
+                            printf("r: %s\n",rhs_type);
+                            printf("m: %d\n",mul);
+                    */
                     if(is_const) {
                         printf("[Error] : constant cannot be assigned\n");
                     } else {
-                        if(strcmp(lhs_type, rhs_type) != 0)
-                            printf("[Error] : return type inconsistent\n");
+                        if(strcmp(lhs_type, rhs_type) != 0) {
+                            if(rhs_type[0] == '_') {
+                                printf("[Error] : %s() has no return type\n", id_flag);
+                            } else {    
+                                switch(lhs_type[0]) {
+                                case 'r':
+                                    if(rhs_type[0] == 's')
+                                        printf("[Error] : return type inconsistent\n");
+                                    break;
+                                case 'i':
+                                    if(rhs_type[0] != 'i')
+                                        printf("[Error] : return type inconsistent\n");
+                                    break;
+                                case 'b':
+                                    if(rhs_type[0] != 'b')
+                                        printf("[Error] : return type inconsistent\n");
+                                    break;
+                                case 's':
+                                    if(rhs_type[0] != 's')
+                                        printf("[Error] : return type inconsistent\n");
+                                    break;
+                                default:
+                                    printf("[Error] : rhs return type unknown\n");
+                                    break;
+                                }
+                            }
+                        } else {
+                            if(mul == 1 && rhs_type[0] == 's') {
+                               printf("[Error] : string type cannot perform multiplication\n");
+                            }
+                        }
                     }
-                    
+                    mul = 0;
                     is_const = 0;
                     is_op = 0;
                 } 
@@ -932,7 +1090,8 @@ boolean_factor      : OP_NOT boolean_factor
                     | relop_expr
                     ;
 
-relop_expr  : expr rel_op expr
+relop_expr  : expr rel_op expr 
+                {if(is_op) strcpy(rhs_type, "boolean");}
             | expr
             ;
 
@@ -952,7 +1111,7 @@ add_op      : OP_ADD
             | OP_SUB
             ;
 
-term        : term mul_op factor
+term        : term mul_op factor {mul = 1;}
 			| factor
 			;
 
@@ -967,25 +1126,44 @@ factor      : var_ref
 			| OP_SUB MK_LPAREN boolean_expr MK_RPAREN
 			| ID 
                 {
+                    id_flag = $1;
+                    //strcpy(id_flag, $1);                     
+                    
                     strcpy(rhs_type, getsymtype($1, 2));
-                    //printf("[rhs] %s\n", rhs_type);
+                    check_func_para = 1;
+                    check_func_pnum = 0;
                 } 
               MK_LPAREN opt_boolean_expr_list MK_RPAREN
                 {
-
+                    check_func_para = 0;
+                    //printf("pnum %d\n",check_func_pnum);
+                    if(check_func_pnum != get_pnum($1)) { 
+                        printf("[Error] : parameter number inconsistent\n"); 
+                    }
+                   // printf("get_pnum %d\n",get_pnum($1));
+                    check_func_pnum = 0;
                 }
 			| OP_SUB ID MK_LPAREN opt_boolean_expr_list MK_RPAREN
             | literal_const
 			;
 
 var_ref		: ID 
-                { 
+                {
+                    if(check_func_para) {
+                        check_func_pnum++;
+                        
+                        if(!check_ptype(id_flag, check_func_pnum, $1)) {
+                            printf("[Error] : parameter type inconsistent\n");
+                        }
+                        
+                    }
+                    
                     if(is_op) {
                         strcpy(rhs_type, getsymtype($1, 2));
-                        //printf("[rhs] %s\n", rhs_type);
+                        printf("[rhs] %s\n", rhs_type);
                     } else {
                         strcpy(lhs_type, getsymtype($1, 1));
-                        //printf("[lhs] %s\n", lhs_type);
+                        printf("[lhs] %s\n", lhs_type);
                         //printf("%d\n", is_const);
                     }
                 } 
