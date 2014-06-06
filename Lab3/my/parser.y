@@ -1160,10 +1160,10 @@ var_ref		: ID
                     
                     if(is_op) {
                         strcpy(rhs_type, getsymtype($1, 2));
-                        printf("[rhs] %s\n", rhs_type);
+                        //printf("[rhs] %s\n", rhs_type);
                     } else {
                         strcpy(lhs_type, getsymtype($1, 1));
-                        printf("[lhs] %s\n", lhs_type);
+                        //printf("[lhs] %s\n", lhs_type);
                         //printf("%d\n", is_const);
                     }
                 } 
@@ -1171,7 +1171,17 @@ var_ref		: ID
 			;
 
 dim			: MK_LB boolean_expr MK_RB
-			;
+			    {
+                    if(is_op) {
+                //        strcpy(rhs_type, getsymtype($1, 2));
+                       // printf("[dim rhs] %s\n", rhs_type);
+                    } else {
+                //        strcpy(lhs_type, getsymtype($1, 1));
+                       // printf("[dim lhs] %s\n", lhs_type);
+                        //printf("%d\n", is_const);
+                    }
+                }
+            ;
 
 %%
 
