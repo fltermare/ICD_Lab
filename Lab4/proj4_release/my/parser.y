@@ -31,6 +31,55 @@ struct SymTable *symbolTable;	// main symbol table
 __BOOLEAN paramError;			// indicate is parameter have any error?
 
 struct PType *funcReturn;		// record function's return type, used at 'return statement' production rule
+//Lab4 variables
+FILE*   pFile;                    // output file
+char*   fun_name;                 // function name
+int     localnumber = 0;          // local variable's number
+char    tab[4];                   // how many tabs
+char*   VariType;                 // Variable Type
+
+//Lab4 flags
+int is_main = 0;
+int is_globalVari = 0;
+
+//Lab4 functions
+struct Vnode
+{
+    char* vname;
+    char* vtype;
+    int   vlocalnumber;
+    struct Vnode *vnext;
+};
+typedef struct Vnode Vnode;
+Vnode* VariHead = (Vnode*) 0;
+
+
+void AddVariList(char* name) 
+{
+    Vnode* ptr;
+    ptr = (Vnode*) malloc(sizeof(Vnode));
+    ptr->vname = (char*) malloc(strlen(name)+1);
+    //ptr->vtype = (char*) malloc(strlen(type)+1);
+
+    strcpy(ptr->vname, name);
+    //strcpy(ptr->vtype, type);
+    ptr->vnext = VariHead;
+    VariHead = ptr;
+}
+
+void OutVariList(char* type)
+{
+    Vnode* ptr;
+    while(VariHead != (Vnode*) 0) {
+       ptr = VariHead;
+       if(is_globalVari == 1)
+           fprintf(pFile, ".field public static %s %s\n", VariHead->vname, type);
+       VariHead = VariHead->vnext;
+       //free
+       free(ptr->vname);
+       free(ptr);
+    }
+}
 
 %}
 
@@ -73,7 +122,13 @@ struct PType *funcReturn;		// record function's return type, used at 'return sta
 
 program			: ID
 			{
-			  struct PType *pType = createPType( VOID_t );
+              pFile = fopen("atest.y", "w");
+              fprintf(pFile, "%s.j;\n", $1);
+              fprintf(pFile, ".class public %s\n", $1);
+              fprintf(pFile, ".super java/lang/Object\n", $1);
+              VariType = (char*) malloc(20);
+              
+              struct PType *pType = createPType( VOID_t );
 			  struct SymNode *newNode = createProgramNode( $1, scope, pType );
 			  insertTab( symbolTable, newNode );
 
@@ -92,21 +147,25 @@ program			: ID
 			  // dump symbol table
 			  if( Opt_D == 1 )
 				printSymTable( symbolTable, scope );
+              
+              fprintf(pFile, ".end method\n");
+              free(VariType);
+              fclose(pFile);
 			}
 			;
 
-program_body		: opt_decl_list opt_func_decl_list compound_stmt
+program_body: {is_globalVari = 1;} opt_decl_list {is_globalVari = 0;} opt_func_decl_list {is_main = 1;} compound_stmt 
 			;
 
-opt_decl_list		: decl_list
-			| /* epsilon */
-			;
+opt_decl_list   : decl_list
+			    | /* epsilon */
+    			;
 
-decl_list		: decl_list decl
+decl_list   : decl_list decl
 			| decl
 			;
 
-decl			: VAR id_list MK_COLON scalar_type MK_SEMICOLON       /* scalar type declaration */
+decl		: VAR id_list MK_COLON scalar_type MK_SEMICOLON       /* scalar type declaration */
 			{
 			  // insert into symbol table
 			  struct idNode_sem *ptr;
@@ -118,7 +177,8 @@ decl			: VAR id_list MK_COLON scalar_type MK_SEMICOLON       /* scalar type decl
 					insertTab( symbolTable, newNode );
 				}
 			  }
-			  
+
+              OutVariList(VariType);
 			  deleteIdList( $2 );
 			}
 			| VAR id_list MK_COLON array_type MK_SEMICOLON        /* array type declaration */
@@ -240,7 +300,7 @@ opt_param_list		: param_list { $$ = $1; }
 			| /* epsilon */ { $$ = 0; }
 			;
 
-param_list		: param_list MK_SEMICOLON param
+param_list  : param_list MK_SEMICOLON param
 			{
 			  param_sem_addParam( $1, $3 );
 			  $$ = $1;
@@ -248,29 +308,36 @@ param_list		: param_list MK_SEMICOLON param
 			| param { $$ = $1; }
 			;
 
-param			: id_list MK_COLON type { $$ = createParam( $1, $3 ); }
+param       : id_list MK_COLON type { $$ = createParam( $1, $3 ); }
 			;
 
-id_list			: id_list MK_COMMA ID
+id_list	    : id_list MK_COMMA ID
 			{
 			  idlist_addNode( $1, $3 );
 			  $$ = $1;
+              
+              AddVariList($3);
 			}
-			| ID { $$ = createIdList($1); }
+			| ID 
+            { 
+              $$ = createIdList($1); 
+              
+              AddVariList($1);
+            }
 			;
 
-opt_type		: MK_COLON type { $$ = $2; }
+opt_type    : MK_COLON type { $$ = $2; }
 			| /* epsilon */ { $$ = createPType( VOID_t ); }
 			;
 
-type			: scalar_type { $$ = $1; }
+type        : scalar_type { $$ = $1; }
 			| array_type { $$ = $1; }
 			;
 
-scalar_type		: INTEGER { $$ = createPType( INTEGER_t ); }
-			| REAL { $$ = createPType( REAL_t ); }
-			| BOOLEAN { $$ = createPType( BOOLEAN_t ); }
-			| STRING { $$ = createPType( STRING_t ); }
+scalar_type : INTEGER { $$ = createPType( INTEGER_t ); strcpy(VariType, "I"); }
+			| REAL { $$ = createPType( REAL_t ); strcpy(VariType, "F"); }
+			| BOOLEAN { $$ = createPType( BOOLEAN_t ); strcpy(VariType, "Z"); }
+			| STRING { $$ = createPType( STRING_t ); strcpy(VariType, "string"); }
 			;
 
 array_type		: ARRAY array_index TO array_index OF type
@@ -299,6 +366,23 @@ compound_stmt		:
 			  scope++;
 			}
 			  BEG
+            {
+              /*
+              int i;
+              for(i = scope; i > 0; --i) {
+                tab = '\t';
+              };
+              
+              fprintf("%s'\n" tab);
+              */
+              if(is_main == 1) {
+                  fprintf(pFile, ".method public static main([Ljava/lang/String;)V\n");
+                  fprintf(pFile, "\t.limit stack 100\n");
+                  fprintf(pFile, "\t.limit local 100\n");
+                  is_main = 0;
+              }
+
+            }
 			  opt_decl_list
 			  opt_stmt_list
 			  END 
@@ -307,7 +391,10 @@ compound_stmt		:
 			  if( Opt_D == 1 )
 			  	printSymTable( symbolTable, scope );
 			  deleteScope( symbolTable, scope );	// leave this scope, delete...
-			  scope--; 
+              
+              fprintf(pFile, "\treturn\n");
+			  
+              scope--;
 			}
 			;
 
