@@ -59,10 +59,12 @@ void AddVariList(char* name)
     Vnode* ptr;
     ptr = (Vnode*) malloc(sizeof(Vnode));
     ptr->vname = (char*) malloc(strlen(name)+1);
-    //ptr->vtype = (char*) malloc(strlen(type)+1);
 
     strcpy(ptr->vname, name);
-    //strcpy(ptr->vtype, type);
+    if(is_globalVari == 1)
+        ptr->vlocalnumber = 0;
+    else
+        ptr->vlocalnumber = ++localnumber;
     ptr->vnext = VariHead;
     VariHead = ptr;
 }
@@ -74,6 +76,8 @@ void OutVariList(char* type)
        ptr = VariHead;
        if(is_globalVari == 1)
            fprintf(pFile, ".field public static %s %s\n", VariHead->vname, type);
+       else
+           fprintf(pFile, "%s %s %d\n", VariHead->vname, type, VariHead->vlocalnumber);
        VariHead = VariHead->vnext;
        //free
        free(ptr->vname);
@@ -120,7 +124,7 @@ void OutVariList(char* type)
 %start program
 %%
 
-program			: ID
+program     : ID
 			{
               pFile = fopen("atest.y", "w");
               fprintf(pFile, "%s.j;\n", $1);
@@ -448,8 +452,8 @@ while_stmt		: WHILE condition_while DO
 condition_while		: boolean_expr { verifyBooleanExpr( $1, "while" ); } 
 			;
 
-for_stmt		: FOR ID 
-			{ 
+for_stmt    : FOR ID 
+			{
 			  insertLoopVarIntoTable( symbolTable, $2 );
 			}
 			  OP_ASSIGN loop_param TO loop_param
@@ -460,7 +464,7 @@ for_stmt		: FOR ID
 			  opt_stmt_list
 			  END DO
 			{
-			  popLoopVar( symbolTable );
+              popLoopVar( symbolTable );
 			}
 			;
 
