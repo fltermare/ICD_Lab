@@ -38,7 +38,7 @@ char*   fun_name;               // function name
 int     localnumber = 0;        // local variable's number
 char    tab[4];                 // how many tabs
 char*   VariType;               // Variable Type
-
+int     param_num = 0;          // number of function's parameter
 //Lab4 flags
 int is_main = 0;
 int is_globalVari = 0;
@@ -46,50 +46,7 @@ int is_simple = 0;              // is in simple_stmt
 int is_assign = 0;              // is in assignment
 int is_const = 0;
 int is_print = 0;               // is in Print stmt
-//Lab4 functions
-
-/*
-struct Vnode
-{
-    char* vname;
-    char* vtype;
-    int   vlocalnumber;
-    struct Vnode *vnext;
-};
-typedef struct Vnode Vnode;
-Vnode* VariHead = (Vnode*) 0;
-
-void AddVariList(char* name) 
-{
-    Vnode* ptr;
-    ptr = (Vnode*) malloc(sizeof(Vnode));
-    ptr->vname = (char*) malloc(strlen(name)+1);
-
-    strcpy(ptr->vname, name);
-    if(is_globalVari == 1)
-        ptr->vlocalnumber = 0;
-    else
-        ptr->vlocalnumber = ++localnumber;
-    ptr->vnext = VariHead;
-    VariHead = ptr;
-}
-
-void OutVariList(char* type)
-{
-    Vnode* ptr;
-    while(VariHead != (Vnode*) 0) {
-       ptr = VariHead;
-       if(is_globalVari == 1)
-           fprintf(pFile, ".field public static %s %s\n", VariHead->vname, type);
-       else
-           fprintf(pFile, "%s %s %d\n", VariHead->vname, type, VariHead->vlocalnumber);
-       VariHead = VariHead->vnext;
-       //free
-       free(ptr->vname);
-       free(ptr);
-    }
-}
-*/
+int is_param = 0;               // in decl function parameters
 %}
 
 %union {
@@ -132,7 +89,7 @@ void OutVariList(char* type)
 program     : ID
 			{
               pFile = fopen("atest.y", "w");
-              fprintf(pFile, ";%s.j\n", $1);
+              fprintf(pFile, "; %s.j\n", $1);
               pro_name = (char*) malloc(sizeof($1)+1);
               strcpy(pro_name, $1);
               fprintf(pFile, ".class public %s\n", pro_name);
@@ -160,7 +117,6 @@ program     : ID
 			  if( Opt_D == 1 )
 				printSymTable( symbolTable, scope );
               
-              fprintf(pFile, ".end method\n");
               free(VariType);
               fclose(pFile);
 			}
@@ -343,29 +299,71 @@ func_decl_list		: func_decl_list func_decl
 			| func_decl
 			;
 
-func_decl		: ID MK_LPAREN opt_param_list
+func_decl   : ID MK_LPAREN
+            {
+                fprintf(pFile, ".method public static %s(", $1);
+                is_param = 1; 
+            }
+              opt_param_list
 			{
-			  // check and insert parameters into symbol table
-			  paramError = insertParamIntoSymTable( symbolTable, $3, scope+1 );
+                is_param = 0; 
+			    // check and insert parameters into symbol table
+			    paramError = insertParamIntoSymTable( symbolTable, $4, scope+1 );
 			}
 			  MK_RPAREN opt_type 
 			{
-			  // check and insert function into symbol table
-			  if( paramError == __TRUE ) {
-			  	printf("--- param(s) with several fault!! ---\n");
-			  } else {
-				insertFuncIntoSymTable( symbolTable, $1, $3, $6, scope );
-			  }
-			  funcReturn = $6;
+                switch($7->type) {
+                case INTEGER_t:
+                    fprintf(pFile, ")I\n");
+                    break;
+                case BOOLEAN_t:
+                    fprintf(pFile, ")I\n");
+                    break;
+                case STRING_t:
+                    //fprintf(pFile, "\tslocal %d ; local variable number %d\n",node->name, node->symLocalNum);
+                    break;
+                case REAL_t:
+                    fprintf(pFile, ")F\n");
+                    break;
+                default:
+                    fprintf(pFile, ")V\n");
+                    break;
+                }
+                
+                // check and insert function into symbol table
+			    if( paramError == __TRUE ) {
+			  	    printf("--- param(s) with several fault!! ---\n");
+			    } else {
+				    insertFuncIntoSymTable( symbolTable, $1, $4, $7, scope );
+			    }
+			    funcReturn = $7;
 			}
 			  MK_SEMICOLON
 			  compound_stmt
 			  END ID
 			{
-			  if( strcmp($1,$11) ) {
-				fprintf( stdout, "########## Error at Line #%d: the end of the functionName mismatch ########## \n", linenum );
-			  }
-			  funcReturn = 0;
+			    if( strcmp($1,$12) ) {
+				    fprintf( stdout, "######### Error at Line #%d: the end of the functionName mismatch ######### \n", linenum );
+			    }
+                switch($7->type) {
+                case INTEGER_t:
+                    fprintf(pFile, "\tireturn\n");
+                    break;
+                case BOOLEAN_t:
+                    fprintf(pFile, "I\n");
+                    break;
+                case STRING_t:
+                    //fprintf(pFile, "\tslocal %d ; local variable number %d\n",node->name, node->symLocalNum);
+                    break;
+                case REAL_t:
+                    fprintf(pFile, "\tfreturn\n");
+                    break;
+                default:
+                    fprintf(pFile, "\treturn\n");
+                    break;
+                }
+                fprintf(pFile, ".end method\n\n");
+			    funcReturn = 0;
 			}
 			;
 
@@ -381,21 +379,45 @@ param_list  : param_list MK_SEMICOLON param
 			| param { $$ = $1; }
 			;
 
-param       : id_list MK_COLON type { $$ = createParam( $1, $3 ); }
+param       :{param_num = 0;} id_list MK_COLON type 
+            { 
+                $$ = createParam( $2, $4 ); 
+                int i;
+                for(i = 0; i < param_num; ++i) {    
+                    switch($4->type) {
+                    case INTEGER_t:
+                        fprintf(pFile, "I");
+                        break;
+                    case BOOLEAN_t:
+                        fprintf(pFile, "B");
+                        break;
+                    case STRING_t:
+                        //fprintf(pFile, "\tslocal %d ; local variable number %d\n",node->name, node->symLocalNum);
+                        break;
+                    case REAL_t:
+                        fprintf(pFile, "F");
+                        break;
+                    default:
+                        fprintf(pFile, "fucking error\n");
+                        break;
+                    }
+                }
+                param_num = 0;
+            }
 			;
 
 id_list	    : id_list MK_COMMA ID
 			{
 			  idlist_addNode( $1, $3 );
 			  $$ = $1;
+              param_num++;
               
-              //AddVariList($3);
 			}
 			| ID 
             { 
+              param_num++;
               $$ = createIdList($1); 
               
-              //AddVariList($1);
             }
 			;
 
@@ -457,7 +479,9 @@ compound_stmt:
                   fprintf(pFile, "\tgetstatic java/lang/System/in Ljava/io/InputStream;\n");
                   fprintf(pFile, "\tinvokespecial java/util/Scanner/<init>(Ljava/io/InputStream;)V\n");
                   fprintf(pFile, "\tputstatic %s/_sc Ljava/util/Scanner;\n", pro_name);
-                  is_main = 0;
+              } else {
+                  fprintf(pFile, ".limit stack 100\n");
+                  fprintf(pFile, ".limit locals 100\n");
               }
 
             }
@@ -469,8 +493,11 @@ compound_stmt:
 			  if( Opt_D == 1 )
 			  	printSymTable( symbolTable, scope );
 			  deleteScope( symbolTable, scope );	// leave this scope, delete...
-              
-              fprintf(pFile, "\treturn\n");
+              if(is_main) {
+                  fprintf(pFile, "\treturn\n");
+                  fprintf(pFile, ".end method\n");
+                  is_main = 0;
+              }
 			  
               scope--;
 			}
@@ -565,7 +592,7 @@ simple_stmt : var_ref
                     }
                 //}
                 */
-                    } else if (scope > 0) {
+                    } else if (node->scope > 0) {
                         switch(node->type->type) {
                         case INTEGER_t:
                             fprintf(pFile, "\tistore %d\n", node->symLocalNum);
@@ -865,7 +892,7 @@ var_ref     : ID
               
               struct SymNode *node = 0;               
               node = lookupSymbol( symbolTable, $1, scope, __TRUE);
-              if(is_print) {
+              if(is_print||is_assign) {
                   if(node == 0) {
                       printf("fucking error\n");
                   } else {
