@@ -346,16 +346,16 @@ __BOOLEAN verifyExistence( struct SymTable *table, struct expr_sem *expr, int sc
             else {
                 switch(node->type->type) {
                 case INTEGER_t:
-                    fprintf(pFile, "ilocal %s ; local variable number %d\n",node->name, node->symLocalNum);
+                    //fprintf(pFile, "ilocal %s ; local variable number %d\n",node->name, node->symLocalNum);
                     break;
                 case BOOLEAN_t:
-                    fprintf(pFile, "blocal %s ; local variable number %d\n",node->name, node->symLocalNum);
+                    //fprintf(pFile, "blocal %s ; local variable number %d\n",node->name, node->symLocalNum);
                     break;
                 case STRING_t:
-                    fprintf(pFile, "slocal %s ; local variable number %d\n",node->name, node->symLocalNum);
+                    //fprintf(pFile, "slocal %s ; local variable number %d\n",node->name, node->symLocalNum);
                     break;
                 case REAL_t:
-                    fprintf(pFile, "flocal %s ; local variable number %d\n",node->name, node->symLocalNum);
+                    //fprintf(pFile, "flocal %s ; local variable number %d\n",node->name, node->symLocalNum);
                     break;
                 default:
                     fprintf(pFile, "fucking error\n");
@@ -371,7 +371,7 @@ __BOOLEAN verifyExistence( struct SymTable *table, struct expr_sem *expr, int sc
                     fprintf(pFile, "iconst_%d\n", node->attribute->constVal->value.booleanVal);
                     break;
                 case STRING_t:
-                    //fprintf(pFile, "ldc "%s"\n", node->attribute->constVal->stringVal);
+                    fprintf(pFile, "ldc %s\n", node->attribute->constVal->value.stringVal);
                     break;
                 case REAL_t:
                     fprintf(pFile, "ldc %s\n", node->attribute->constVal->value.realVal);
@@ -732,9 +732,10 @@ void verifyScalarExpr( struct expr_sem *expr, const char *str )
 		fprintf( stdout, "########## Error at Line#%d: %s statement's operand is array type ##########\n", linenum, str );
 	}
 
-    if(strcmp(str, "print") == 0) 
-        fprintf(pFile, "ldc");
-    else {} 
+    if(strcmp(str, "print") == 0) { 
+        //fprintf(pFile, "ldc");
+    } else {
+    } 
 
 }
 

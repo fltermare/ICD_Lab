@@ -45,6 +45,7 @@ int is_globalVari = 0;
 int is_simple = 0;              // is in simple_stmt
 int is_assign = 0;              // is in assignment
 int is_const = 0;
+int is_print = 0;               // is in Print stmt
 //Lab4 functions
 struct Vnode
 {
@@ -252,7 +253,7 @@ literal_const   : INT_CONST
 			  float tmp = $1;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
               if(is_assign)
-                  fprintf(pFile, "ldc %d\n", tmp);
+                  fprintf(pFile, "ldc %f\n", tmp);
 
 			}
 			| OP_SUB FLOAT_CONST
@@ -260,7 +261,7 @@ literal_const   : INT_CONST
 			  float tmp = -$2;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
               if(is_assign)
-                  fprintf(pFile, "ldc %d\n", tmp);
+                  fprintf(pFile, "ldc %f\n", tmp);
 
 			}
 			| SCIENTIFIC 
@@ -284,6 +285,8 @@ literal_const   : INT_CONST
 			  $$ = createConstAttr( STRING_t, $1 ); 
               if(is_assign)
                   fprintf(pFile, "ldc %s\n", $1);
+              if(is_print)
+                  fprintf(pFile, "\tldc \"%s\"\n", $1);
 
 			}
 			| TRUE
@@ -469,7 +472,16 @@ simple_stmt : var_ref
               is_assign = 0;            
               is_simple = 0;
 			}
-			| PRINT boolean_expr MK_SEMICOLON { verifyScalarExpr( $2, "print" ); }
+			| PRINT 
+            {
+              is_print = 1;
+              fprintf(pFile, "getstatic java/lang/System/out Ljava/io/PrintStream;\n");
+            } 
+            boolean_expr MK_SEMICOLON 
+            { 
+              verifyScalarExpr( $3, "print" ); is_print = 0;
+              fprintf(pFile, "invokevirtual java/io/PrintStream/print(Ljava/lang/String;)V\n");
+            }
  			| READ boolean_expr MK_SEMICOLON { verifyScalarExpr( $2, "read" ); }
 			;
 
@@ -645,7 +657,7 @@ factor      : var_ref
 			  $$ = verifyFuncInvoke( $2, $4, symbolTable, scope );
 			  $$->beginningOp = SUB_t;
 			}
-			| literal_const
+            | literal_const
 			{
 			  $$ = (struct expr_sem *)malloc(sizeof(struct expr_sem));
 			  $$->isDeref = __TRUE;
@@ -664,6 +676,33 @@ factor      : var_ref
 var_ref     : ID
 			{
 			  $$ = createExprSem( $1 );
+              
+              struct SymNode *node = 0;               
+              node = lookupSymbol( symbolTable, $1, scope, __TRUE);
+              if(is_print) {
+                  if(node == 0) {
+                      printf("fucking error\n");
+                  } else {
+                      switch(node->type->type) {
+                      case INTEGER_t:
+                        fprintf(pFile, "\tiload %d ; local variable number %s\n", node->symLocalNum, node->name);
+                        break;
+                      case BOOLEAN_t:
+                        fprintf(pFile, "\tiload %d ; local variable number %s\n", node->symLocalNum, node->name) ;
+                        break;
+                      case STRING_t:
+                        fprintf(pFile, "\tldc \"%s\" ; local variable number %s\n",
+                        node->attribute->constVal->value.stringVal, node->name);
+                        break;
+                      case REAL_t:
+                        fprintf(pFile, "\tfload %d ; local variable number %s\n", node->symLocalNum, node->name);
+                        break;
+                      default:
+                        fprintf(pFile, "fucking error\n");
+                        break;
+                      }
+                  }
+              }
 			}
 			| var_ref dim
 			{
