@@ -236,32 +236,37 @@ literal_const   : INT_CONST
 			{
 			  int tmp = $1;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
-              if(is_assign)
-                  fprintf(pFile, "sipush %d\n", tmp);
+              if(is_assign) {
+                  fprintf(pFile, "ldc %d\n", tmp);
+              }
 			}
 			| OP_SUB INT_CONST
 			{
 			  int tmp = -$2;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
               
-              if(is_assign)
-                  fprintf(pFile, "sipush %d\n", $2);
+              if(is_assign) {
+                  fprintf(pFile, "ldc %d\n", $2);
+              }
 
 			}
 			| FLOAT_CONST
 			{
 			  float tmp = $1;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign)
+              if(is_assign) {
                   fprintf(pFile, "ldc %f\n", tmp);
+
+              }
 
 			}
 			| OP_SUB FLOAT_CONST
 			{
 			  float tmp = -$2;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign)
+              if(is_assign) {
                   fprintf(pFile, "ldc %f\n", tmp);
+              }
 
 			}
 			| SCIENTIFIC 
@@ -269,22 +274,25 @@ literal_const   : INT_CONST
 			  float tmp = $1;
 			  $$ = createConstAttr( REAL_t, &tmp );
               
-              if(is_assign)
+              if(is_assign) {
                   fprintf(pFile, "ldc %d\n", $1);
+              }
 			}
 			| OP_SUB SCIENTIFIC
 			{
 			  float tmp = -$2;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign)
+              if(is_assign) {
                   fprintf(pFile, "ldc -%d\n", $2);
+              }
 
 			}
 			| STR_CONST
 			{
 			  $$ = createConstAttr( STRING_t, $1 ); 
-              if(is_assign)
+              if(is_assign) {
                   fprintf(pFile, "ldc %s\n", $1);
+              }
               if(is_print)
                   fprintf(pFile, "\tldc \"%s\"\n", $1);
 
@@ -293,16 +301,18 @@ literal_const   : INT_CONST
 			{
 			  SEMTYPE tmp = __TRUE;
 			  $$ = createConstAttr( BOOLEAN_t, &tmp ); 
-              if(is_assign)
+              if(is_assign) {
                   fprintf(pFile, "iconst_1\n");
+              }
 
 			}
 			| FALSE
 			{
 			  SEMTYPE tmp = __FALSE;
 			  $$ = createConstAttr( BOOLEAN_t, &tmp );
-              if(is_assign)
+              if(is_assign) {
                   fprintf(pFile, "iconst_0\n");
+              }
 
 			}
 			;

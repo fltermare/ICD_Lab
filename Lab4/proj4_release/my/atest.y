@@ -5,9 +5,13 @@ test1.j;
 	.limit stack 100
 	.limit local 100
 iconst_1
+	istore 6
 iconst_0
-sipush 1234567
+	istore 6
+ldc 1234567
+	istore 1
 ldc 2.860000
+	fstore 7
 getstatic java/lang/System/out Ljava/io/PrintStream;
 	iload 1 ; local variable number a
 invokevirtual java/io/PrintStream/print(Ljava/lang/String;)V

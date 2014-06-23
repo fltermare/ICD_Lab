@@ -346,16 +346,16 @@ __BOOLEAN verifyExistence( struct SymTable *table, struct expr_sem *expr, int sc
             else {
                 switch(node->type->type) {
                 case INTEGER_t:
-                    //fprintf(pFile, "ilocal %s ; local variable number %d\n",node->name, node->symLocalNum);
+                    fprintf(pFile, "\tistore %d\n", node->symLocalNum);
                     break;
                 case BOOLEAN_t:
-                    //fprintf(pFile, "blocal %s ; local variable number %d\n",node->name, node->symLocalNum);
+                    fprintf(pFile, "\tistore %d\n", node->symLocalNum);
                     break;
                 case STRING_t:
-                    //fprintf(pFile, "slocal %s ; local variable number %d\n",node->name, node->symLocalNum);
+                    //fprintf(pFile, "\tslocal %d ; local variable number %d\n",node->name, node->symLocalNum);
                     break;
                 case REAL_t:
-                    //fprintf(pFile, "flocal %s ; local variable number %d\n",node->name, node->symLocalNum);
+                    fprintf(pFile, "\tfstore %d\n", node->symLocalNum);
                     break;
                 default:
                     fprintf(pFile, "fucking error\n");
