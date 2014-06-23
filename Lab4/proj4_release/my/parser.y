@@ -136,6 +136,7 @@ program     : ID
               strcpy(pro_name, $1);
               fprintf(pFile, ".class public %s\n", pro_name);
               fprintf(pFile, ".super java/lang/Object\n");
+              fprintf(pFile, ".field public static _sc Ljava/util/Scanner;\n");
               VariType = (char*) malloc(20);
               
               struct PType *pType = createPType( VOID_t );
@@ -186,14 +187,30 @@ decl		: VAR id_list MK_COLON scalar_type MK_SEMICOLON       /* scalar type decla
 					newNode = createVarNode( ptr->value, scope, $4 );
                     if(scope == 0) {
                         newNode->symLocalNum = 0;
+                        fprintf(pFile, ".field public static %s ", newNode->name);
+                        switch(newNode->type->type) {
+                        case INTEGER_t:
+                            fprintf(pFile, "I\n") ;
+                            break;
+                        case BOOLEAN_t:
+                            fprintf(pFile, "Z\n") ;
+                            break;
+                        case STRING_t:
+                            fprintf(pFile, "C\n") ;
+                            break;
+                        case REAL_t:
+                            fprintf(pFile, "F\n") ;
+                            break;
+                        default:
+                            fprintf(pFile, "fucking error\n");
+                        break;
+                        }
                     } else {
                         newNode->symLocalNum = ++localnumber;
-                        
                     }
-					insertTab( symbolTable, newNode );
+                    insertTab( symbolTable, newNode );
 				}
 			  }
-
               //OutVariList(VariType);
 			  deleteIdList( $2 );
 			}
@@ -237,7 +254,7 @@ literal_const   : INT_CONST
 			  int tmp = $1;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
               if(is_assign) {
-                  fprintf(pFile, "ldc %d\n", tmp);
+                  fprintf(pFile, "\tldc %d\n", tmp);
               }
 			}
 			| OP_SUB INT_CONST
@@ -246,7 +263,7 @@ literal_const   : INT_CONST
 			  $$ = createConstAttr( INTEGER_t, &tmp );
               
               if(is_assign) {
-                  fprintf(pFile, "ldc %d\n", $2);
+                  fprintf(pFile, "\tldc %d\n", $2);
               }
 
 			}
@@ -255,7 +272,7 @@ literal_const   : INT_CONST
 			  float tmp = $1;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
               if(is_assign) {
-                  fprintf(pFile, "ldc %f\n", tmp);
+                  fprintf(pFile, "\tldc %f\n", tmp);
 
               }
 
@@ -265,7 +282,7 @@ literal_const   : INT_CONST
 			  float tmp = -$2;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
               if(is_assign) {
-                  fprintf(pFile, "ldc %f\n", tmp);
+                  fprintf(pFile, "\tldc %f\n", tmp);
               }
 
 			}
@@ -275,7 +292,7 @@ literal_const   : INT_CONST
 			  $$ = createConstAttr( REAL_t, &tmp );
               
               if(is_assign) {
-                  fprintf(pFile, "ldc %d\n", $1);
+                  fprintf(pFile, "\tldc %d\n", $1);
               }
 			}
 			| OP_SUB SCIENTIFIC
@@ -283,7 +300,7 @@ literal_const   : INT_CONST
 			  float tmp = -$2;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
               if(is_assign) {
-                  fprintf(pFile, "ldc -%d\n", $2);
+                  fprintf(pFile, "\tldc -%d\n", $2);
               }
 
 			}
@@ -291,10 +308,12 @@ literal_const   : INT_CONST
 			{
 			  $$ = createConstAttr( STRING_t, $1 ); 
               if(is_assign) {
-                  fprintf(pFile, "ldc %s\n", $1);
+                  fprintf(pFile, "\tldc %s\n", $1);
               }
-              if(is_print)
+              if(is_print) {
                   fprintf(pFile, "\tldc \"%s\"\n", $1);
+                  fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(Ljava/lang/String;)V\n");
+              }
 
 			}
 			| TRUE
@@ -302,7 +321,7 @@ literal_const   : INT_CONST
 			  SEMTYPE tmp = __TRUE;
 			  $$ = createConstAttr( BOOLEAN_t, &tmp ); 
               if(is_assign) {
-                  fprintf(pFile, "iconst_1\n");
+                  fprintf(pFile, "\ticonst_1\n");
               }
 
 			}
@@ -311,7 +330,7 @@ literal_const   : INT_CONST
 			  SEMTYPE tmp = __FALSE;
 			  $$ = createConstAttr( BOOLEAN_t, &tmp );
               if(is_assign) {
-                  fprintf(pFile, "iconst_0\n");
+                  fprintf(pFile, "\ticonst_0\n");
               }
 
 			}
@@ -416,7 +435,7 @@ stmt        : compound_stmt
 			| proc_call_stmt
 			;
 
-compound_stmt		: 
+compound_stmt: 
 			{ 
 			  scope++;
 			}
@@ -431,9 +450,14 @@ compound_stmt		:
               fprintf("%s'\n" tab);
               */
               if(is_main == 1) {
-                  fprintf(pFile, ".method public static main([Ljava/lang/String;)V\n");
+                  fprintf(pFile, "\n.method public static main([Ljava/lang/String;)V\n");
                   fprintf(pFile, "\t.limit stack 100\n");
                   fprintf(pFile, "\t.limit local 100\n");
+                  fprintf(pFile, "\tnew java/util/Scanner\n");
+                  fprintf(pFile, "\tdup\n");
+                  fprintf(pFile, "\tgetstatic java/lang/System/in Ljava/io/InputStream;\n");
+                  fprintf(pFile, "\tinvokespecial java/util/Scanner/<init>(Ljava/io/InputStream;)V\n");
+                  fprintf(pFile, "\tputstatic %s/_sc Ljava/util/Scanner;\n", pro_name);
                   is_main = 0;
               }
 
@@ -485,12 +509,11 @@ simple_stmt : var_ref
 			| PRINT 
             {
               is_print = 1;
-              fprintf(pFile, "getstatic java/lang/System/out Ljava/io/PrintStream;\n");
+              fprintf(pFile, "\tgetstatic java/lang/System/out Ljava/io/PrintStream;\n");
             } 
             boolean_expr MK_SEMICOLON 
             { 
               verifyScalarExpr( $3, "print" ); is_print = 0;
-              fprintf(pFile, "invokevirtual java/io/PrintStream/print(Ljava/lang/String;)V\n");
             }
  			| READ boolean_expr MK_SEMICOLON { verifyScalarExpr( $2, "read" ); }
 			;
@@ -696,16 +719,21 @@ var_ref     : ID
                       switch(node->type->type) {
                       case INTEGER_t:
                         fprintf(pFile, "\tiload %d ; local variable number %s\n", node->symLocalNum, node->name);
+                        fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(I)V\n");
                         break;
                       case BOOLEAN_t:
                         fprintf(pFile, "\tiload %d ; local variable number %s\n", node->symLocalNum, node->name) ;
+                        fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(Z)V\n");
                         break;
                       case STRING_t:
-                        fprintf(pFile, "\tldc \"%s\" ; local variable number %s\n",
+                        fprintf(pFile, "\tldc \"%s\" ; local variable number %s\n", \
                         node->attribute->constVal->value.stringVal, node->name);
+                        
+                        fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(Ljava/lang/String;)V\n");
                         break;
                       case REAL_t:
                         fprintf(pFile, "\tfload %d ; local variable number %s\n", node->symLocalNum, node->name);
+                        fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(F)V\n");
                         break;
                       default:
                         fprintf(pFile, "fucking error\n");

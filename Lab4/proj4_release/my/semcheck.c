@@ -341,9 +341,49 @@ __BOOLEAN verifyExistence( struct SymTable *table, struct expr_sem *expr, int sc
         
         //Lab4
         if(is_simple && node->category != CONSTANT_t) {
-            if(node->scope == 0)
-                fprintf(pFile, "getstatic %s/%s %s\n", pro_name, node->name, node->name);
-            else {
+            if(node->scope == 0) {
+                if(isAssignmentLHS == __TRUE) {
+                    fprintf(pFile, "getstatic %s/%s ", pro_name, node->name);
+                    
+                    switch(node->type->type) {
+                    case INTEGER_t:
+                        fprintf(pFile, "I\n");
+                        break;
+                    case BOOLEAN_t:
+                        fprintf(pFile, "I\n");
+                        break;
+                    case STRING_t:
+                        //fprintf(pFile, "\tslocal %d ; local variable number %d\n",node->name, node->symLocalNum);
+                        break;
+                    case REAL_t:
+                        fprintf(pFile, "R\n");
+                        break;
+                    default:
+                        fprintf(pFile, "fucking error\n");
+                        break;
+                    }    
+                } else { 
+                    fprintf(pFile, "putstatic %s/%s ", pro_name, node->name, node->name);
+
+                    switch(node->type->type) {
+                    case INTEGER_t:
+                        fprintf(pFile, "I\n");
+                        break;
+                    case BOOLEAN_t:
+                        fprintf(pFile, "I\n");
+                        break;
+                    case STRING_t:
+                        //fprintf(pFile, "\tslocal %d ; local variable number %d\n",node->name, node->symLocalNum);
+                        break;
+                    case REAL_t:
+                        fprintf(pFile, "R\n");
+                        break;
+                    default:
+                        fprintf(pFile, "fucking error\n");
+                        break;
+                    }
+                }
+            } else {
                 switch(node->type->type) {
                 case INTEGER_t:
                     fprintf(pFile, "\tistore %d\n", node->symLocalNum);
