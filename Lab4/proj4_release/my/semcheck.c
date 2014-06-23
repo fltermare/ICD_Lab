@@ -6,6 +6,10 @@
 #include "symtab.h"
 
 extern int linenum;
+//Lab4
+extern FILE* pFile;
+extern int is_simple;
+extern char* pro_name;
 
 void printOperator( OPERATOR op )
 {
@@ -334,7 +338,15 @@ __BOOLEAN verifyExistence( struct SymTable *table, struct expr_sem *expr, int sc
 		result = __FALSE;
 	}
 	else {	// deference and verify, if pass, setup PType field in expr_sem
-
+        
+        //Lab4
+        if(is_simple) {
+            fprintf(pFile, "hahahahaha\n");
+            if(node->scope == 0)
+                fprintf(pFile, "getstatic %s/%s %s\n", pro_name, node->name, node->name);
+            else
+                fprintf(pFile, "load %s/%s %s\n", pro_name, node->name, node->name);
+        }
 		// expr is dereferenced...
 		expr->isDeref = __TRUE;
 

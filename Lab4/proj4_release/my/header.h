@@ -86,7 +86,8 @@ union SymAttr {
 // structure for symbol table
 struct SymNode {
 	char *name;
-	int scope;		
+	int scope;	
+    int symLocalNum;
 	SEMTYPE category;		
 	struct PType *type;
 	union SymAttr *attribute;

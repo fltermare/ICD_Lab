@@ -33,6 +33,7 @@ __BOOLEAN paramError;			// indicate is parameter have any error?
 struct PType *funcReturn;		// record function's return type, used at 'return statement' production rule
 //Lab4 variables
 FILE*   pFile;                    // output file
+char*   pro_name;                 // Program name
 char*   fun_name;                 // function name
 int     localnumber = 0;          // local variable's number
 char    tab[4];                   // how many tabs
@@ -41,6 +42,7 @@ char*   VariType;                 // Variable Type
 //Lab4 flags
 int is_main = 0;
 int is_globalVari = 0;
+int is_simple = 0;
 
 //Lab4 functions
 struct Vnode
@@ -53,7 +55,7 @@ struct Vnode
 typedef struct Vnode Vnode;
 Vnode* VariHead = (Vnode*) 0;
 
-
+/*
 void AddVariList(char* name) 
 {
     Vnode* ptr;
@@ -84,7 +86,7 @@ void OutVariList(char* type)
        free(ptr);
     }
 }
-
+*/
 %}
 
 %union {
@@ -128,8 +130,10 @@ program     : ID
 			{
               pFile = fopen("atest.y", "w");
               fprintf(pFile, "%s.j;\n", $1);
-              fprintf(pFile, ".class public %s\n", $1);
-              fprintf(pFile, ".super java/lang/Object\n", $1);
+              pro_name = (char*) malloc(sizeof($1)+1);
+              strcpy(pro_name, $1);
+              fprintf(pFile, ".class public %s\n", pro_name);
+              fprintf(pFile, ".super java/lang/Object\n");
               VariType = (char*) malloc(20);
               
               struct PType *pType = createPType( VOID_t );
@@ -178,11 +182,17 @@ decl		: VAR id_list MK_COLON scalar_type MK_SEMICOLON       /* scalar type decla
 			  	if( verifyRedeclaration( symbolTable, ptr->value, scope ) ==__FALSE ) { }
 				else {
 					newNode = createVarNode( ptr->value, scope, $4 );
+                    if(scope == 0) {
+                        newNode->symLocalNum = 0;
+                    } else {
+                        newNode->symLocalNum = ++localnumber;
+                        fprintf(pFile, "local var %s = stack %d\n",newNode->name, newNode->symLocalNum);
+                    }
 					insertTab( symbolTable, newNode );
 				}
 			  }
 
-              OutVariList(VariType);
+              //OutVariList(VariType);
 			  deleteIdList( $2 );
 			}
 			| VAR id_list MK_COLON array_type MK_SEMICOLON        /* array type declaration */
@@ -320,13 +330,13 @@ id_list	    : id_list MK_COMMA ID
 			  idlist_addNode( $1, $3 );
 			  $$ = $1;
               
-              AddVariList($3);
+              //AddVariList($3);
 			}
 			| ID 
             { 
               $$ = createIdList($1); 
               
-              AddVariList($1);
+              //AddVariList($1);
             }
 			;
 
@@ -402,16 +412,17 @@ compound_stmt		:
 			}
 			;
 
-opt_stmt_list		: stmt_list
-			| /* epsilon */
-			;
+opt_stmt_list   : stmt_list
+    			| /* epsilon */
+			    ;
 
-stmt_list		: stmt_list stmt
+stmt_list   : stmt_list stmt
 			| stmt
 			;
 
-simple_stmt		: var_ref OP_ASSIGN boolean_expr MK_SEMICOLON
+simple_stmt : var_ref OP_ASSIGN boolean_expr MK_SEMICOLON
 			{
+              is_simple = 1;
 			  // check if LHS exists
 			  __BOOLEAN flagLHS = verifyExistence( symbolTable, $1, scope, __TRUE );
 			  // id RHS is not dereferenced, check and deference
@@ -422,18 +433,20 @@ simple_stmt		: var_ref OP_ASSIGN boolean_expr MK_SEMICOLON
 			  // if both LHS and RHS are exists, verify their type
 			  if( flagLHS==__TRUE && flagRHS==__TRUE )
 				verifyAssignmentTypeMatch( $1, $3 );
+              
+              is_simple = 0;
 			}
 			| PRINT boolean_expr MK_SEMICOLON { verifyScalarExpr( $2, "print" ); }
  			| READ boolean_expr MK_SEMICOLON { verifyScalarExpr( $2, "read" ); }
 			;
 
-proc_call_stmt		: ID MK_LPAREN opt_boolean_expr_list MK_RPAREN MK_SEMICOLON
+proc_call_stmt  : ID MK_LPAREN opt_boolean_expr_list MK_RPAREN MK_SEMICOLON
 			{
 			  verifyFuncInvoke( $1, $3, symbolTable, scope );
 			}
 			;
 
-cond_stmt		: IF condition THEN
+cond_stmt   : IF condition THEN
 			  opt_stmt_list
 			  ELSE
 			  opt_stmt_list
@@ -441,10 +454,10 @@ cond_stmt		: IF condition THEN
 			| IF condition THEN opt_stmt_list END IF
 			;
 
-condition		: boolean_expr { verifyBooleanExpr( $1, "if" ); } 
+condition   : boolean_expr { verifyBooleanExpr( $1, "if" ); } 
 			;
 
-while_stmt		: WHILE condition_while DO
+while_stmt  : WHILE condition_while DO
 			  opt_stmt_list
 			  END DO
 			;
@@ -468,11 +481,11 @@ for_stmt    : FOR ID
 			}
 			;
 
-loop_param		: INT_CONST { $$ = $1; }
+loop_param  : INT_CONST { $$ = $1; }
 			| OP_SUB INT_CONST { $$ = -$2; }
 			;
 
-return_stmt		: RETURN boolean_expr MK_SEMICOLON
+return_stmt : RETURN boolean_expr MK_SEMICOLON
 			{
 			  verifyReturnStatement( $2, funcReturn );
 			}
@@ -543,7 +556,7 @@ expr			: expr add_op term
 			| term { $$ = $1; }
 			;
 
-add_op			: OP_ADD { $$ = ADD_t; }
+add_op      : OP_ADD { $$ = ADD_t; }
 			| OP_SUB { $$ = SUB_t; }
 			;
 
@@ -565,7 +578,7 @@ mul_op			: OP_MUL { $$ = MUL_t; }
 			| OP_MOD { $$ = MOD_t; }
 			;
 
-factor			: var_ref
+factor      : var_ref
 			{
 			  verifyExistence( symbolTable, $1, scope, __FALSE );
 			  $$ = $1;
@@ -615,7 +628,7 @@ factor			: var_ref
 			}
 			;
 
-var_ref			: ID
+var_ref     : ID
 			{
 			  $$ = createExprSem( $1 );
 			}
