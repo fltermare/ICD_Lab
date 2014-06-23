@@ -47,6 +47,7 @@ fdiv
 	ldc 1
 	ldc 100
 iadd
+	i2f
 	fstore 6
 	getstatic java/lang/System/out Ljava/io/PrintStream;
 	fload 6 ; local variable number f

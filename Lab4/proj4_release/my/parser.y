@@ -257,7 +257,6 @@ literal_const   : INT_CONST
               if(is_assign || is_print) {
                   fprintf(pFile, "\tldc %d\n", tmp);
               }
-              printf("tmp int[%d]  is_assing %d\n", tmp, is_assign);
 			}
 			| OP_SUB INT_CONST
 			{
@@ -276,7 +275,6 @@ literal_const   : INT_CONST
               if(is_assign || is_print) {
                   fprintf(pFile, "\tldc %f\n", tmp);
               }
-              printf("tmp float[%f]  is_assing %d\n", tmp, is_assign);
 			}
 			| OP_SUB FLOAT_CONST
 			{
@@ -488,29 +486,131 @@ stmt_list   : stmt_list stmt
 
 simple_stmt : var_ref 
             { 
-              is_simple = 1;
-              is_assign = 1;
+                is_simple = 1;
+                is_assign = 1;
             } 
               OP_ASSIGN boolean_expr MK_SEMICOLON
 			{
-			  // check if LHS exists
-			  __BOOLEAN flagLHS = verifyExistence( symbolTable, $1, scope, __TRUE );
-			  // id RHS is not dereferenced, check and deference
-			  __BOOLEAN flagRHS = __TRUE;
-			  if( $4->isDeref == __FALSE ) {
-				flagRHS = verifyExistence( symbolTable, $4, scope, __FALSE );
-			  }
-			  // if both LHS and RHS are exists, verify their type
-			  if( flagLHS==__TRUE && flagRHS==__TRUE )
-				verifyAssignmentTypeMatch( $1, $4 );
-              
-              is_assign = 0;            
-              is_simple = 0;
+                /*
+                if($1->pType->type == REAL_t && $4->pType->type == INTEGER_t) {
+                    fprintf(pFile, "i2f\n");
+                }
+			    */
+                // check if LHS exists
+			    __BOOLEAN flagLHS = verifyExistence( symbolTable, $1, scope, __TRUE );
+			    // id RHS is not dereferenced, check and deference
+                __BOOLEAN flagRHS = __TRUE;
+			    if( $4->isDeref == __FALSE ) {
+				    flagRHS = verifyExistence( symbolTable, $4, scope, __FALSE );
+			    }
+			    // if both LHS and RHS are exists, verify their type
+			    if( flagLHS==__TRUE && flagRHS==__TRUE )
+				    verifyAssignmentTypeMatch( $1, $4 );
+                
+                
+                
+                //Lab4
+                struct SymNode *node = 0;
+                node = lookupLoopVar(symbolTable, $1->varRef->id);
+                if(node == 0) {
+                    node = lookupSymbol(symbolTable, $1->varRef->id, scope, __FALSE);
+                }
+                
+                if($1->pType->type == REAL_t && $4->pType->type == INTEGER_t) {
+                    fprintf(pFile, "\ti2f\n");
+                }
+                
+                if(is_simple && node->category != CONSTANT_t) {
+                    if(node->scope == -1) {
+                /*
+                //if(isAssignmentLHS == __TRUE) {
+                    fprintf(pFile, "getstatic %s/%s ", pro_name, node->name);
+                    
+                    switch(node->type->type) {
+                    case INTEGER_t:
+                        fprintf(pFile, "I\n");
+                        break;
+                    case BOOLEAN_t:
+                        fprintf(pFile, "I\n");
+                        break;
+                    case STRING_t:
+                        //fprintf(pFile, "\tslocal %d ; local variable number %d\n",node->name, node->symLocalNum);
+                        break;
+                    case REAL_t:
+                        fprintf(pFile, "R\n");
+                        break;
+                    default:
+                        fprintf(pFile, "fucking error\n");
+                        break;
+                    }    
+                //} else { 
+                    fprintf(pFile, "putstatic %s/%s ", pro_name, node->name, node->name);
+
+                    switch(node->type->type) {
+                    case INTEGER_t:
+                        fprintf(pFile, "I\n");
+                        break;
+                    case BOOLEAN_t:
+                        fprintf(pFile, "I\n");
+                        break;
+                    case STRING_t:
+                        //fprintf(pFile, "\tslocal %d ; local variable number %d\n",node->name, node->symLocalNum);
+                        break;
+                    case REAL_t:
+                        fprintf(pFile, "R\n");
+                        break;
+                    default:
+                        fprintf(pFile, "fucking error\n");
+                        break;
+                    }
+                //}
+                */
+                    } else if (scope > 0) {
+                        switch(node->type->type) {
+                        case INTEGER_t:
+                            fprintf(pFile, "\tistore %d\n", node->symLocalNum);
+                            break;
+                        case BOOLEAN_t:
+                            fprintf(pFile, "\tistore %d\n", node->symLocalNum);
+                            break;
+                        case STRING_t:
+                            //fprintf(pFile, "\tslocal %d ; local variable number %d\n",node->name, node->symLocalNum);
+                            break;
+                        case REAL_t:
+                            fprintf(pFile, "\tfstore %d\n", node->symLocalNum);
+                            break;
+                        default:
+                            fprintf(pFile, "fucking error\n");
+                            break;
+                        }
+                    }
+                } else if (is_simple && node->category == CONSTANT_t) {
+                    switch(node->type->type) {
+                        case INTEGER_t:
+                            fprintf(pFile, "sipush %d\n", node->attribute->constVal->value.integerVal);
+                            break;
+                        case BOOLEAN_t:
+                            fprintf(pFile, "iconst_%d\n", node->attribute->constVal->value.booleanVal);
+                            break;
+                        case STRING_t:
+                            fprintf(pFile, "ldc %s\n", node->attribute->constVal->value.stringVal);
+                            break;
+                        case REAL_t:
+                            fprintf(pFile, "ldc %s\n", node->attribute->constVal->value.realVal);
+                            break;
+                        default:
+                            fprintf(pFile, "fucking error\n");
+                            break;
+                        }
+                } 
+                
+                is_assign = 0;            
+                is_simple = 0;
 			}
 			| PRINT 
             {
-              is_print = 1;
-              fprintf(pFile, "\tgetstatic java/lang/System/out Ljava/io/PrintStream;\n");
+                is_print = 1;
+                fprintf(pFile, "\tgetstatic java/lang/System/out Ljava/io/PrintStream;\n");
             } 
             boolean_expr MK_SEMICOLON 
             {

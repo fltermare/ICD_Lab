@@ -385,6 +385,7 @@ __BOOLEAN verifyExistence( struct SymTable *table, struct expr_sem *expr, int sc
                     }
                 }
             } else {
+                /*
                 switch(node->type->type) {
                 case INTEGER_t:
                     fprintf(pFile, "\tistore %d\n", node->symLocalNum);
@@ -402,6 +403,7 @@ __BOOLEAN verifyExistence( struct SymTable *table, struct expr_sem *expr, int sc
                     fprintf(pFile, "fucking error\n");
                     break;
                 }
+                */
             }
         } else if (is_simple && node->category == CONSTANT_t) {
             switch(node->type->type) {
@@ -527,9 +529,8 @@ void verifyAssignmentTypeMatch( struct expr_sem *LHS, struct expr_sem *RHS )
 	// verify type
 	else if( LHS->pType->type != RHS->pType->type ) {
 		if( !(LHS->pType->type==REAL_t && RHS->pType->type==INTEGER_t) ) {
-			fprintf(pFile, "i2f\n");
             misMatch = __TRUE;
-		}
+		} 
 	}
 	// verify dimension #
 	if( LHS->pType->dimNum != RHS->pType->dimNum ) {
