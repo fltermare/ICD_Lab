@@ -10,6 +10,7 @@ extern int linenum;
 extern FILE* pFile;
 extern int is_simple;
 extern char* pro_name;
+extern int localnumber;
 
 void printOperator( OPERATOR op )
 {
@@ -526,7 +527,8 @@ void verifyAssignmentTypeMatch( struct expr_sem *LHS, struct expr_sem *RHS )
 	// verify type
 	else if( LHS->pType->type != RHS->pType->type ) {
 		if( !(LHS->pType->type==REAL_t && RHS->pType->type==INTEGER_t) ) {
-			misMatch = __TRUE;
+			fprintf(pFile, "i2f\n");
+            misMatch = __TRUE;
 		}
 	}
 	// verify dimension #
@@ -613,9 +615,20 @@ void verifyArithmeticOp( struct expr_sem *op1, OPERATOR operator, struct expr_se
 			(op2->pType->type==INTEGER_t || op2->pType->type==REAL_t)) ) {	// need to consider type coercion
 			if( op1->pType->type==INTEGER_t && op2->pType->type==INTEGER_t ) {
 				op1->pType->type = INTEGER_t;
+                fprintf(pFile, "i");
 			}
 			else {
-				op1->pType->type = REAL_t;
+				if(op2->pType->type == INTEGER_t) {
+                    fprintf(pFile, "\ti2f\n");
+                } else if (op1->pType->type == INTEGER_t) {
+                    fprintf(pFile, "\tfstore %d\n", ++localnumber);
+                    fprintf(pFile, "\ti2f\n");
+                    fprintf(pFile, "\tfload %d\n", localnumber--);
+                }
+                fprintf(pFile, "f");
+                op1->pType->type = REAL_t;
+                
+                //fprintf(pFile, "\tf");
 			}
 		}
 		else {	// fail verify, dump error message

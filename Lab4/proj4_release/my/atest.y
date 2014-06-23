@@ -1,4 +1,4 @@
-test2.j;
+;test2.j
 .class public test2
 .super java/lang/Object
 .field public static _sc Ljava/util/Scanner;
@@ -10,7 +10,7 @@ test2.j;
 
 .method public static main([Ljava/lang/String;)V
 	.limit stack 100
-	.limit local 100
+	.limit locals 100
 	new java/util/Scanner
 	dup
 	getstatic java/lang/System/in Ljava/io/InputStream;
@@ -22,6 +22,8 @@ test2.j;
 	fstore 6
 	ldc 1.230000
 	ldc 3
+	i2f
+fmul
 	fstore 6
 	getstatic java/lang/System/out Ljava/io/PrintStream;
 	fload 6 ; local variable number f
@@ -31,6 +33,10 @@ test2.j;
 	invokevirtual java/io/PrintStream/print(Ljava/lang/String;)V
 	ldc 3
 	ldc 1.230000
+	fstore 7
+	i2f
+	fload 7
+fdiv
 	fstore 6
 	getstatic java/lang/System/out Ljava/io/PrintStream;
 	fload 6 ; local variable number f
@@ -40,6 +46,7 @@ test2.j;
 	invokevirtual java/io/PrintStream/print(Ljava/lang/String;)V
 	ldc 1
 	ldc 100
+iadd
 	fstore 6
 	getstatic java/lang/System/out Ljava/io/PrintStream;
 	fload 6 ; local variable number f
@@ -49,6 +56,7 @@ test2.j;
 	invokevirtual java/io/PrintStream/print(Ljava/lang/String;)V
 	ldc 100
 	ldc 17
+irem
 	istore 5
 	getstatic java/lang/System/out Ljava/io/PrintStream;
 	iload 5 ; local variable number e
@@ -58,6 +66,8 @@ test2.j;
 	invokevirtual java/io/PrintStream/print(Ljava/lang/String;)V
 	ldc 1.230000
 	ldc 3
+	i2f
+fsub
 	fstore 6
 	getstatic java/lang/System/out Ljava/io/PrintStream;
 	fload 6 ; local variable number f
@@ -66,6 +76,18 @@ test2.j;
 	ldc "\n"
 	invokevirtual java/io/PrintStream/print(Ljava/lang/String;)V
 	getstatic java/lang/System/out Ljava/io/PrintStream;
+	ldc 100
+	ldc 20
+iadd
+	ldc 3.140000
+	fstore 7
+	i2f
+	fload 7
+fmul
+	ldc 2
+	i2f
+fdiv
+	invokevirtual java/io/PrintStream/print(F)V
 	getstatic java/lang/System/out Ljava/io/PrintStream;
 	ldc "\n"
 	invokevirtual java/io/PrintStream/print(Ljava/lang/String;)V

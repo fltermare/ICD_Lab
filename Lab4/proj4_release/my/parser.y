@@ -47,6 +47,8 @@ int is_assign = 0;              // is in assignment
 int is_const = 0;
 int is_print = 0;               // is in Print stmt
 //Lab4 functions
+
+/*
 struct Vnode
 {
     char* vname;
@@ -57,7 +59,6 @@ struct Vnode
 typedef struct Vnode Vnode;
 Vnode* VariHead = (Vnode*) 0;
 
-/*
 void AddVariList(char* name) 
 {
     Vnode* ptr;
@@ -131,7 +132,7 @@ void OutVariList(char* type)
 program     : ID
 			{
               pFile = fopen("atest.y", "w");
-              fprintf(pFile, "%s.j;\n", $1);
+              fprintf(pFile, ";%s.j\n", $1);
               pro_name = (char*) malloc(sizeof($1)+1);
               strcpy(pro_name, $1);
               fprintf(pFile, ".class public %s\n", pro_name);
@@ -253,16 +254,17 @@ literal_const   : INT_CONST
 			{
 			  int tmp = $1;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
-              if(is_assign) {
+              if(is_assign || is_print) {
                   fprintf(pFile, "\tldc %d\n", tmp);
               }
+              printf("tmp int[%d]  is_assing %d\n", tmp, is_assign);
 			}
 			| OP_SUB INT_CONST
 			{
 			  int tmp = -$2;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
               
-              if(is_assign) {
+              if(is_assign || is_print) {
                   fprintf(pFile, "\tldc %d\n", $2);
               }
 
@@ -271,17 +273,16 @@ literal_const   : INT_CONST
 			{
 			  float tmp = $1;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign) {
+              if(is_assign || is_print) {
                   fprintf(pFile, "\tldc %f\n", tmp);
-
               }
-
+              printf("tmp float[%f]  is_assing %d\n", tmp, is_assign);
 			}
 			| OP_SUB FLOAT_CONST
 			{
 			  float tmp = -$2;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign) {
+              if(is_assign || is_print) {
                   fprintf(pFile, "\tldc %f\n", tmp);
               }
 
@@ -291,7 +292,7 @@ literal_const   : INT_CONST
 			  float tmp = $1;
 			  $$ = createConstAttr( REAL_t, &tmp );
               
-              if(is_assign) {
+              if(is_assign || is_print) {
                   fprintf(pFile, "\tldc %d\n", $1);
               }
 			}
@@ -299,7 +300,7 @@ literal_const   : INT_CONST
 			{
 			  float tmp = -$2;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign) {
+              if(is_assign || is_print) {
                   fprintf(pFile, "\tldc -%d\n", $2);
               }
 
@@ -312,7 +313,7 @@ literal_const   : INT_CONST
               }
               if(is_print) {
                   fprintf(pFile, "\tldc \"%s\"\n", $1);
-                  fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(Ljava/lang/String;)V\n");
+                  //fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(Ljava/lang/String;)V\n");
               }
 
 			}
@@ -320,7 +321,7 @@ literal_const   : INT_CONST
 			{
 			  SEMTYPE tmp = __TRUE;
 			  $$ = createConstAttr( BOOLEAN_t, &tmp ); 
-              if(is_assign) {
+              if(is_assign || is_print) {
                   fprintf(pFile, "\ticonst_1\n");
               }
 
@@ -329,7 +330,7 @@ literal_const   : INT_CONST
 			{
 			  SEMTYPE tmp = __FALSE;
 			  $$ = createConstAttr( BOOLEAN_t, &tmp );
-              if(is_assign) {
+              if(is_assign || is_print) {
                   fprintf(pFile, "\ticonst_0\n");
               }
 
@@ -452,7 +453,7 @@ compound_stmt:
               if(is_main == 1) {
                   fprintf(pFile, "\n.method public static main([Ljava/lang/String;)V\n");
                   fprintf(pFile, "\t.limit stack 100\n");
-                  fprintf(pFile, "\t.limit local 100\n");
+                  fprintf(pFile, "\t.limit locals 100\n");
                   fprintf(pFile, "\tnew java/util/Scanner\n");
                   fprintf(pFile, "\tdup\n");
                   fprintf(pFile, "\tgetstatic java/lang/System/in Ljava/io/InputStream;\n");
@@ -512,8 +513,26 @@ simple_stmt : var_ref
               fprintf(pFile, "\tgetstatic java/lang/System/out Ljava/io/PrintStream;\n");
             } 
             boolean_expr MK_SEMICOLON 
-            { 
-              verifyScalarExpr( $3, "print" ); is_print = 0;
+            {
+                    switch($3->pType->type) {
+                    case INTEGER_t:
+                        fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(I)V\n");
+                        break;
+                    case BOOLEAN_t:
+                        fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(Z)V\n");
+                        break;
+                    case STRING_t:
+                        fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(Ljava/lang/String;)V\n");
+                        break;
+                    case REAL_t:
+                        fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(F)V\n");
+                        break;
+                    default:
+                        fprintf(pFile, "fucking error\n");
+                        break;
+                    }
+                
+                verifyScalarExpr( $3, "print" ); is_print = 0;
             }
  			| READ boolean_expr MK_SEMICOLON { verifyScalarExpr( $2, "read" ); }
 			;
@@ -628,30 +647,64 @@ rel_op      : OP_LT { $$ = LT_t; }
 
 expr        : expr add_op term
 			{
-			  verifyArithmeticOp( $1, $2, $3 );
-			  $$ = $1;
+                verifyArithmeticOp( $1, $2, $3 );
+			    $$ = $1;
+                
+                switch($2) {
+                case ADD_t: 
+                    fprintf(pFile, "add\n");
+                    break;
+                case SUB_t: 
+                    fprintf(pFile, "sub\n");
+                    break;
+                default:
+                    fprintf(pFile, "fucking error;");
+                    break;
+                }
 			}
 			| term { $$ = $1; }
 			;
 
-add_op      : OP_ADD { $$ = ADD_t; }
-			| OP_SUB { $$ = SUB_t; }
+add_op      : OP_ADD 
+            { 
+                $$ = ADD_t;
+            }
+			| OP_SUB 
+            { 
+                $$ = SUB_t;
+            }
 			;
 
 term        : term mul_op factor
 			{
-			  if( $2 == MOD_t ) {
-				verifyModOp( $1, $3 );
-			  }
-			  else {
-				verifyArithmeticOp( $1, $2, $3 );
-			  }
-			  $$ = $1;
+			    if( $2 == MOD_t ) {
+				    verifyModOp( $1, $3 );
+			    }
+			    else {
+		            verifyArithmeticOp( $1, $2, $3 );
+			    }
+                
+                switch($2) {
+                case MUL_t: 
+                    fprintf(pFile, "mul\n");
+                    break;
+                case DIV_t: 
+                    fprintf(pFile, "div\n");
+                    break;
+                case MOD_t: 
+                    fprintf(pFile, "irem\n");
+                    break;
+                default:
+                    fprintf(pFile, "fucking error;");
+                    break;
+                }
+			    
+                $$ = $1;
 			}
 			| factor { $$ = $1; }
 			;
 
-mul_op			: OP_MUL { $$ = MUL_t; }
+mul_op      : OP_MUL { $$ = MUL_t; }
 			| OP_DIV { $$ = DIV_t; }
 			| OP_MOD { $$ = MOD_t; }
 			;
@@ -719,21 +772,21 @@ var_ref     : ID
                       switch(node->type->type) {
                       case INTEGER_t:
                         fprintf(pFile, "\tiload %d ; local variable number %s\n", node->symLocalNum, node->name);
-                        fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(I)V\n");
+                        //fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(I)V\n");
                         break;
                       case BOOLEAN_t:
                         fprintf(pFile, "\tiload %d ; local variable number %s\n", node->symLocalNum, node->name) ;
-                        fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(Z)V\n");
+                        //fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(Z)V\n");
                         break;
                       case STRING_t:
                         fprintf(pFile, "\tldc \"%s\" ; local variable number %s\n", \
                         node->attribute->constVal->value.stringVal, node->name);
                         
-                        fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(Ljava/lang/String;)V\n");
+                        //fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(Ljava/lang/String;)V\n");
                         break;
                       case REAL_t:
                         fprintf(pFile, "\tfload %d ; local variable number %s\n", node->symLocalNum, node->name);
-                        fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(F)V\n");
+                        //fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(F)V\n");
                         break;
                       default:
                         fprintf(pFile, "fucking error\n");
