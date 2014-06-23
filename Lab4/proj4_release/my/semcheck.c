@@ -340,12 +340,46 @@ __BOOLEAN verifyExistence( struct SymTable *table, struct expr_sem *expr, int sc
 	else {	// deference and verify, if pass, setup PType field in expr_sem
         
         //Lab4
-        if(is_simple) {
-            fprintf(pFile, "hahahahaha\n");
+        if(is_simple && node->category != CONSTANT_t) {
             if(node->scope == 0)
                 fprintf(pFile, "getstatic %s/%s %s\n", pro_name, node->name, node->name);
-            else
-                fprintf(pFile, "load %s/%s %s\n", pro_name, node->name, node->name);
+            else {
+                switch(node->type->type) {
+                case INTEGER_t:
+                    fprintf(pFile, "ilocal %s ; local variable number %d\n",node->name, node->symLocalNum);
+                    break;
+                case BOOLEAN_t:
+                    fprintf(pFile, "blocal %s ; local variable number %d\n",node->name, node->symLocalNum);
+                    break;
+                case STRING_t:
+                    fprintf(pFile, "slocal %s ; local variable number %d\n",node->name, node->symLocalNum);
+                    break;
+                case REAL_t:
+                    fprintf(pFile, "flocal %s ; local variable number %d\n",node->name, node->symLocalNum);
+                    break;
+                default:
+                    fprintf(pFile, "fucking error\n");
+                    break;
+                }
+            }
+        } else if (is_simple && node->category == CONSTANT_t) {
+            switch(node->type->type) {
+                case INTEGER_t:
+                    fprintf(pFile, "sipush %d\n", node->attribute->constVal->value.integerVal);
+                    break;
+                case BOOLEAN_t:
+                    fprintf(pFile, "iconst_%d\n", node->attribute->constVal->value.booleanVal);
+                    break;
+                case STRING_t:
+                    //fprintf(pFile, "ldc "%s"\n", node->attribute->constVal->stringVal);
+                    break;
+                case REAL_t:
+                    fprintf(pFile, "ldc %s\n", node->attribute->constVal->value.realVal);
+                    break;
+                default:
+                    fprintf(pFile, "fucking error\n");
+                    break;
+                }
         }
 		// expr is dereferenced...
 		expr->isDeref = __TRUE;
@@ -697,6 +731,11 @@ void verifyScalarExpr( struct expr_sem *expr, const char *str )
 	if( expr->pType->dim > 0 ) {
 		fprintf( stdout, "########## Error at Line#%d: %s statement's operand is array type ##########\n", linenum, str );
 	}
+
+    if(strcmp(str, "print") == 0) 
+        fprintf(pFile, "ldc");
+    else {} 
+
 }
 
 void verifyBooleanExpr( struct expr_sem *expr, const char *str )

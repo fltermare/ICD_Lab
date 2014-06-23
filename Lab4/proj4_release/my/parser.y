@@ -32,18 +32,19 @@ __BOOLEAN paramError;			// indicate is parameter have any error?
 
 struct PType *funcReturn;		// record function's return type, used at 'return statement' production rule
 //Lab4 variables
-FILE*   pFile;                    // output file
-char*   pro_name;                 // Program name
-char*   fun_name;                 // function name
-int     localnumber = 0;          // local variable's number
-char    tab[4];                   // how many tabs
-char*   VariType;                 // Variable Type
+FILE*   pFile;                  // output file
+char*   pro_name;               // Program name
+char*   fun_name;               // function name
+int     localnumber = 0;        // local variable's number
+char    tab[4];                 // how many tabs
+char*   VariType;               // Variable Type
 
 //Lab4 flags
 int is_main = 0;
 int is_globalVari = 0;
-int is_simple = 0;
-
+int is_simple = 0;              // is in simple_stmt
+int is_assign = 0;              // is in assignment
+int is_const = 0;
 //Lab4 functions
 struct Vnode
 {
@@ -186,7 +187,7 @@ decl		: VAR id_list MK_COLON scalar_type MK_SEMICOLON       /* scalar type decla
                         newNode->symLocalNum = 0;
                     } else {
                         newNode->symLocalNum = ++localnumber;
-                        fprintf(pFile, "local var %s = stack %d\n",newNode->name, newNode->symLocalNum);
+                        
                     }
 					insertTab( symbolTable, newNode );
 				}
@@ -230,49 +231,76 @@ decl		: VAR id_list MK_COLON scalar_type MK_SEMICOLON       /* scalar type decla
 			}
 			;
 
-literal_const		: INT_CONST
+literal_const   : INT_CONST
 			{
 			  int tmp = $1;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
+              if(is_assign)
+                  fprintf(pFile, "sipush %d\n", tmp);
 			}
 			| OP_SUB INT_CONST
 			{
 			  int tmp = -$2;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
+              
+              if(is_assign)
+                  fprintf(pFile, "sipush %d\n", $2);
+
 			}
 			| FLOAT_CONST
 			{
 			  float tmp = $1;
-			  $$ = createConstAttr( REAL_t, &tmp );
+			  $$ = createConstAttr( REAL_t, &tmp ); 
+              if(is_assign)
+                  fprintf(pFile, "ldc %d\n", tmp);
+
 			}
 			| OP_SUB FLOAT_CONST
 			{
 			  float tmp = -$2;
-			  $$ = createConstAttr( REAL_t, &tmp );
+			  $$ = createConstAttr( REAL_t, &tmp ); 
+              if(is_assign)
+                  fprintf(pFile, "ldc %d\n", tmp);
+
 			}
 			| SCIENTIFIC 
 			{
 			  float tmp = $1;
 			  $$ = createConstAttr( REAL_t, &tmp );
+              
+              if(is_assign)
+                  fprintf(pFile, "ldc %d\n", $1);
 			}
 			| OP_SUB SCIENTIFIC
 			{
 			  float tmp = -$2;
-			  $$ = createConstAttr( REAL_t, &tmp );
+			  $$ = createConstAttr( REAL_t, &tmp ); 
+              if(is_assign)
+                  fprintf(pFile, "ldc -%d\n", $2);
+
 			}
 			| STR_CONST
 			{
-			  $$ = createConstAttr( STRING_t, $1 );
+			  $$ = createConstAttr( STRING_t, $1 ); 
+              if(is_assign)
+                  fprintf(pFile, "ldc %s\n", $1);
+
 			}
 			| TRUE
 			{
 			  SEMTYPE tmp = __TRUE;
-			  $$ = createConstAttr( BOOLEAN_t, &tmp );
+			  $$ = createConstAttr( BOOLEAN_t, &tmp ); 
+              if(is_assign)
+                  fprintf(pFile, "iconst_1\n");
+
 			}
 			| FALSE
 			{
 			  SEMTYPE tmp = __FALSE;
 			  $$ = createConstAttr( BOOLEAN_t, &tmp );
+              if(is_assign)
+                  fprintf(pFile, "iconst_0\n");
+
 			}
 			;
 
@@ -362,11 +390,11 @@ array_type		: ARRAY array_index TO array_index OF type
 			}
 			;
 
-array_index		: INT_CONST { $$ = $1; }
+array_index : INT_CONST { $$ = $1; }
 			| OP_SUB INT_CONST { $$ = -$2; }
 			;
 
-stmt			: compound_stmt
+stmt        : compound_stmt
 			| simple_stmt
 			| cond_stmt
 			| while_stmt
@@ -420,20 +448,25 @@ stmt_list   : stmt_list stmt
 			| stmt
 			;
 
-simple_stmt : var_ref OP_ASSIGN boolean_expr MK_SEMICOLON
-			{
+simple_stmt : var_ref 
+            { 
               is_simple = 1;
+              is_assign = 1;
+            } 
+              OP_ASSIGN boolean_expr MK_SEMICOLON
+			{
 			  // check if LHS exists
 			  __BOOLEAN flagLHS = verifyExistence( symbolTable, $1, scope, __TRUE );
 			  // id RHS is not dereferenced, check and deference
 			  __BOOLEAN flagRHS = __TRUE;
-			  if( $3->isDeref == __FALSE ) {
-				flagRHS = verifyExistence( symbolTable, $3, scope, __FALSE );
+			  if( $4->isDeref == __FALSE ) {
+				flagRHS = verifyExistence( symbolTable, $4, scope, __FALSE );
 			  }
 			  // if both LHS and RHS are exists, verify their type
 			  if( flagLHS==__TRUE && flagRHS==__TRUE )
-				verifyAssignmentTypeMatch( $1, $3 );
+				verifyAssignmentTypeMatch( $1, $4 );
               
+              is_assign = 0;            
               is_simple = 0;
 			}
 			| PRINT boolean_expr MK_SEMICOLON { verifyScalarExpr( $2, "print" ); }
@@ -508,7 +541,7 @@ boolean_expr_list	: boolean_expr_list MK_COMMA boolean_expr
 			}
 			;
 
-boolean_expr		: boolean_expr OP_OR boolean_term
+boolean_expr: boolean_expr OP_OR boolean_term
 			{
 			  verifyAndOrOp( $1, OR_t, $3 );
 			  $$ = $1;
@@ -516,7 +549,7 @@ boolean_expr		: boolean_expr OP_OR boolean_term
 			| boolean_term { $$ = $1; }
 			;
 
-boolean_term		: boolean_term OP_AND boolean_factor
+boolean_term: boolean_term OP_AND boolean_factor
 			{
 			  verifyAndOrOp( $1, AND_t, $3 );
 			  $$ = $1;
@@ -532,7 +565,7 @@ boolean_factor		: OP_NOT boolean_factor
 			| relop_expr { $$ = $1; }
 			;
 
-relop_expr		: expr rel_op expr
+relop_expr  : expr rel_op expr
 			{
 			  verifyRelOp( $1, $2, $3 );
 			  $$ = $1;
@@ -540,7 +573,7 @@ relop_expr		: expr rel_op expr
 			| expr { $$ = $1; }
 			;
 
-rel_op			: OP_LT { $$ = LT_t; }
+rel_op      : OP_LT { $$ = LT_t; }
 			| OP_LE { $$ = LE_t; }
 			| OP_EQ { $$ = EQ_t; }
 			| OP_GE { $$ = GE_t; }
@@ -548,7 +581,7 @@ rel_op			: OP_LT { $$ = LT_t; }
 			| OP_NE { $$ = NE_t; }
 			;
 
-expr			: expr add_op term
+expr        : expr add_op term
 			{
 			  verifyArithmeticOp( $1, $2, $3 );
 			  $$ = $1;
@@ -560,7 +593,7 @@ add_op      : OP_ADD { $$ = ADD_t; }
 			| OP_SUB { $$ = SUB_t; }
 			;
 
-term			: term mul_op factor
+term        : term mul_op factor
 			{
 			  if( $2 == MOD_t ) {
 				verifyModOp( $1, $3 );
