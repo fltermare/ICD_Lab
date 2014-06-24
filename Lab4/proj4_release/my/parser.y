@@ -40,6 +40,7 @@ char    tab[4];                 // how many tabs
 char*   VariType;               // Variable Type
 int     param_num = 0;          // number of function's parameter
 int     label_num = 0;          // number of label
+int     labelLoopNum= 0;        // number of Loop's label 
 //Lab4 flags
 int is_main = 0;
 int is_globalVari = 0;
@@ -215,7 +216,7 @@ literal_const   : INT_CONST
 			{
 			  int tmp = $1;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
-              if(is_assign || is_print || is_return || is_condition) {
+              if(is_assign || is_print || is_return || is_condition || is_for_while) {
                   fprintf(pFile, "\tldc %d\n", tmp);
               }
 			}
@@ -224,7 +225,7 @@ literal_const   : INT_CONST
 			  int tmp = -$2;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
               
-              if(is_assign || is_print || is_return || is_condition) {
+              if(is_assign || is_print || is_return || is_condition || is_for_while) {
                   fprintf(pFile, "\tldc %d\n", $2);
               }
 
@@ -233,7 +234,7 @@ literal_const   : INT_CONST
 			{
 			  float tmp = $1;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign || is_print || is_return || is_condition) {
+              if(is_assign || is_print || is_return || is_condition || is_for_while) {
                   fprintf(pFile, "\tldc %f\n", tmp);
               }
 			}
@@ -241,7 +242,7 @@ literal_const   : INT_CONST
 			{
 			  float tmp = -$2;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign || is_print || is_return || is_condition) {
+              if(is_assign || is_print || is_return || is_condition || is_for_while) {
                   fprintf(pFile, "\tldc %f\n", tmp);
               }
 
@@ -251,7 +252,7 @@ literal_const   : INT_CONST
 			  float tmp = $1;
 			  $$ = createConstAttr( REAL_t, &tmp );
               
-              if(is_assign || is_print || is_return || is_condition) {
+              if(is_assign || is_print || is_return || is_condition || is_for_while) {
                   fprintf(pFile, "\tldc %d\n", $1);
               }
 			}
@@ -259,7 +260,7 @@ literal_const   : INT_CONST
 			{
 			  float tmp = -$2;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign || is_print || is_return || is_condition) {
+              if(is_assign || is_print || is_return || is_condition || is_for_while) {
                   fprintf(pFile, "\tldc -%d\n", $2);
               }
 
@@ -280,7 +281,7 @@ literal_const   : INT_CONST
 			{
 			  SEMTYPE tmp = __TRUE;
 			  $$ = createConstAttr( BOOLEAN_t, &tmp ); 
-              if(is_assign || is_print || is_return || is_condition) {
+              if(is_assign || is_print || is_return || is_condition || is_for_while) {
                   fprintf(pFile, "\ticonst_1\n");
               }
 
@@ -289,7 +290,7 @@ literal_const   : INT_CONST
 			{
 			  SEMTYPE tmp = __FALSE;
 			  $$ = createConstAttr( BOOLEAN_t, &tmp );
-              if(is_assign || is_print || is_return || is_condition) {
+              if(is_assign || is_print || is_return || is_condition || is_for_while) {
                   fprintf(pFile, "\ticonst_0\n");
               }
 
@@ -693,16 +694,74 @@ for_stmt    : FOR
               ID 
 			{
 			    insertLoopVarIntoTable( symbolTable, $3 );
+                
 			}
 			  OP_ASSIGN loop_param TO loop_param
 			{
-			    is_for_while = 0;
                 verifyLoopParam( $6, $8 );
+                
+                struct SymNode *node = 0;
+                node = lookupLoopVar( symbolTable, $3 ); 
+                if(node != 0)  
+                    node->symLocalNum = ++localnumber;
+                else
+                    printf("[for_stmt_id] fucking error\n");
+
+                fprintf(pFile, "\tldc %d\n", $6);
+                fprintf(pFile, "\tistore %d\n", node->symLocalNum);
+                
+                fprintf(pFile, "Lbegin_%d:\n", labelLoopNum++);
+                fprintf(pFile, "\tiload %d\n", node->symLocalNum);
+                fprintf(pFile, "\tsipush %d\n", $8);
+                fprintf(pFile, "\tisub\n");
+                
+                fprintf(pFile, "\tiflt Ltrue_%d\n", labelLoopNum);
+                fprintf(pFile, "\ticonst_0\n");
+                fprintf(pFile, "\tgoto Lfalse_%d\n", labelLoopNum);
+               
+               
+                fprintf(pFile, "Ltrue_%d:\n", labelLoopNum);
+                fprintf(pFile, "\ticonst_1\n");
+                fprintf(pFile, "Lfalse_%d:\n", labelLoopNum++);
+                fprintf(pFile, "\tifeq Lexit_%d\n", labelLoopNum-2);
+                /*
+                switch(newNode->type->type) {
+                case INTEGER_t:
+                    fprintf(pFile, "I\n") ;
+                    break;
+                case BOOLEAN_t:
+                    fprintf(pFile, "Z\n") ;
+                    break;
+                case STRING_t:
+                    fprintf(pFile, "C\n") ;
+                    break;
+                case REAL_t:
+                    fprintf(pFile, "F\n") ;
+                    break;
+                default:
+                    fprintf(pFile, "[decl type] fucking error\n");
+                    break;
+                }  
+                */
 			}
 			  DO
 			  opt_stmt_list
 			  END DO
 			{
+			    struct SymNode *node = 0;
+                node = lookupLoopVar( symbolTable, $3 ); 
+                if(node == 0)  
+                    printf("[for_stmt_id_end] fucking error\n");
+                
+                fprintf(pFile, "\tiload %d\n", node->symLocalNum);
+                fprintf(pFile, "\tsipush 1\n");
+                fprintf(pFile, "\tiadd\n");
+                fprintf(pFile, "\tistore %d\n", node->symLocalNum);
+                labelLoopNum -= 2;
+                fprintf(pFile, "\tgoto Lbegin_%d\n", labelLoopNum);
+                fprintf(pFile, "Lexit_%d:\n", labelLoopNum);
+                
+                is_for_while = 0;
                 popLoopVar( symbolTable );
 			}
 			;
@@ -1007,8 +1066,15 @@ var_ref     : ID
 			    $$ = createExprSem( $1 );
               
                 struct SymNode *node = 0;               
-                node = lookupSymbol( symbolTable, $1, scope, __TRUE);
-                if(is_print || is_assign || is_return || is_condition) {
+                
+                if(is_for_while) {
+                    node = lookupLoopVar( symbolTable, $1);
+                }
+                if(node == 0)
+                    node = lookupSymbol( symbolTable, $1, scope, __TRUE);
+                
+                if(is_print || is_assign || is_return || is_condition || is_for_while) {
+                    
                     if(node == 0) {
                         printf("[var_ref id] fucking error\n");
                     } else {

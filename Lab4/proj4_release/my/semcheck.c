@@ -962,6 +962,7 @@ void insertLoopVarIntoTable( struct SymTable *table, const char *id )
 		//struct SymNode *newNode = createLoopVarNode( id );
 		pushLoopVar( table, createLoopVarNode(id) );
 	}
+    //nodePtr->symLocalNum = localnumber++;
 }
 
 // major bug(s)......
