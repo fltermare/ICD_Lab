@@ -51,6 +51,7 @@ int is_read = 0;                // is in Read stmt
 int is_param = 0;               // in decl function parameters
 int is_condition = 0;           // in condition stmt
 int is_return = 0;
+int is_for_while = 0;           // in for or while stmt
 %}
 
 %union {
@@ -163,7 +164,7 @@ decl		: VAR id_list MK_COLON scalar_type MK_SEMICOLON       /* scalar type decla
                             fprintf(pFile, "F\n") ;
                             break;
                         default:
-                            fprintf(pFile, "fucking error\n");
+                            fprintf(pFile, "[decl type] fucking error\n");
                         break;
                         }
                     } else {
@@ -408,7 +409,7 @@ param       :{param_num = 0;} id_list MK_COLON type
                         fprintf(pFile, "F");
                         break;
                     default:
-                        fprintf(pFile, "fucking error\n");
+                        fprintf(pFile, "[param type] fucking error\n");
                         break;
                     }
                 }
@@ -564,7 +565,7 @@ simple_stmt : var_ref
                             fprintf(pFile, "\tfstore %d\n", node->symLocalNum);
                             break;
                         default:
-                            fprintf(pFile, "fucking error\n");
+                            fprintf(pFile, "[simple_stmt type !const] fucking error\n");
                             break;
                         }
                     }
@@ -583,7 +584,7 @@ simple_stmt : var_ref
                             fprintf(pFile, "ldc %s\n", node->attribute->constVal->value.realVal);
                             break;
                         default:
-                            fprintf(pFile, "fucking error\n");
+                            fprintf(pFile, "[simple_stmt type const] fucking error\n");
                             break;
                         }
                 } 
@@ -612,7 +613,7 @@ simple_stmt : var_ref
                         fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(F)V\n");
                         break;
                     default:
-                        fprintf(pFile, "fucking error\n");
+                        fprintf(pFile, "[print] fucking error\n");
                         break;
                     }
                 
@@ -685,19 +686,24 @@ while_stmt  : WHILE condition_while DO
 condition_while		: boolean_expr { verifyBooleanExpr( $1, "while" ); } 
 			;
 
-for_stmt    : FOR ID 
+for_stmt    : FOR
+            {
+                is_for_while = 1;
+            }
+              ID 
 			{
-			  insertLoopVarIntoTable( symbolTable, $2 );
+			    insertLoopVarIntoTable( symbolTable, $3 );
 			}
 			  OP_ASSIGN loop_param TO loop_param
 			{
-			  verifyLoopParam( $5, $7 );
+			    is_for_while = 0;
+                verifyLoopParam( $6, $8 );
 			}
 			  DO
 			  opt_stmt_list
 			  END DO
 			{
-              popLoopVar( symbolTable );
+                popLoopVar( symbolTable );
 			}
 			;
 
@@ -727,7 +733,7 @@ return_stmt : RETURN
                     fprintf(pFile, "\tfreturn\n");
                     break;
                 default:
-                    printf("fucking error\n");
+                    printf("[return] fucking error\n");
                     break;
                 }
 			}
@@ -842,7 +848,7 @@ relop_expr  : expr rel_op expr
                     fprintf(pFile, "\tifeq Lelse_%d\n", label_num);
                    break;
                 default:
-                    fprintf(pFile, "fucking error;");
+                    fprintf(pFile, "[relop] fucking error;");
                     break;
                 }
                 
@@ -871,7 +877,7 @@ expr        : expr add_op term
                     fprintf(pFile, "sub\n");
                     break;
                 default:
-                    fprintf(pFile, "fucking error;");
+                    fprintf(pFile, "[add_op] fucking error;");
                     break;
                 }
 			}
@@ -908,7 +914,7 @@ term        : term mul_op factor
                     fprintf(pFile, "irem\n");
                     break;
                 default:
-                    fprintf(pFile, "fucking error;");
+                    fprintf(pFile, "[mul_op] fucking error;");
                     break;
                 }
 			    
@@ -974,7 +980,7 @@ factor      : var_ref
                     fprintf(pFile, "\tf") ;
                     break;
                 default:
-                    fprintf(pFile, "fucking error\n");
+                    fprintf(pFile, "[OP_SUB procedure] fucking error\n");
                     break;
                 }
                 fprintf(pFile, "neg\n");
@@ -1004,7 +1010,7 @@ var_ref     : ID
                 node = lookupSymbol( symbolTable, $1, scope, __TRUE);
                 if(is_print || is_assign || is_return || is_condition) {
                     if(node == 0) {
-                        printf("fucking error\n");
+                        printf("[var_ref id] fucking error\n");
                     } else {
                         switch(node->type->type) {
                         case INTEGER_t:
@@ -1026,7 +1032,7 @@ var_ref     : ID
                             //fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(F)V\n");
                             break;
                         default:
-                            fprintf(pFile, "fucking error\n");
+                            fprintf(pFile, "[var_ref type1] fucking error\n");
                             break;
                         }
                     }
@@ -1050,7 +1056,7 @@ var_ref     : ID
                         fprintf(pFile, "\tfstore %d\n", node->symLocalNum);
                         break;
                     default:
-                        fprintf(pFile, "fucking error\n");
+                        fprintf(pFile, "[var_ref type2] fucking error\n");
                         break;
                     }
                 }

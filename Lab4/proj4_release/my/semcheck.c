@@ -360,7 +360,7 @@ __BOOLEAN verifyExistence( struct SymTable *table, struct expr_sem *expr, int sc
                         fprintf(pFile, "R\n");
                         break;
                     default:
-                        fprintf(pFile, "fucking error\n");
+                        fprintf(pFile, "[varifyExist LHS] fucking error\n");
                         break;
                     }    
                 } else { 
@@ -380,7 +380,7 @@ __BOOLEAN verifyExistence( struct SymTable *table, struct expr_sem *expr, int sc
                         fprintf(pFile, "R\n");
                         break;
                     default:
-                        fprintf(pFile, "fucking error\n");
+                        fprintf(pFile, "[varifyExist RHS] fucking error\n");
                         break;
                     }
                 }
@@ -420,7 +420,7 @@ __BOOLEAN verifyExistence( struct SymTable *table, struct expr_sem *expr, int sc
                     fprintf(pFile, "ldc %s\n", node->attribute->constVal->value.realVal);
                     break;
                 default:
-                    fprintf(pFile, "fucking error\n");
+                    fprintf(pFile, "[type] fucking error\n");
                     break;
                 }
         }
@@ -792,7 +792,7 @@ struct expr_sem *verifyFuncInvoke( const char *id, struct expr_sem *exprList, st
             fprintf(pFile, "F"); 
             break; 
         default: 
-            printf("fucking erorr\n"); 
+            printf("[varifyFunInvoke] fucking erorr\n"); 
             break; 
         }
     }
