@@ -47,6 +47,8 @@ int is_assign = 0;              // is in assignment
 int is_const = 0;
 int is_print = 0;               // is in Print stmt
 int is_param = 0;               // in decl function parameters
+int is_return = 0;
+int is_proc = 0;                // procedure
 %}
 
 %union {
@@ -210,7 +212,7 @@ literal_const   : INT_CONST
 			{
 			  int tmp = $1;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
-              if(is_assign || is_print) {
+              if(is_assign || is_print || is_return) {
                   fprintf(pFile, "\tldc %d\n", tmp);
               }
 			}
@@ -219,7 +221,7 @@ literal_const   : INT_CONST
 			  int tmp = -$2;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
               
-              if(is_assign || is_print) {
+              if(is_assign || is_print || is_return) {
                   fprintf(pFile, "\tldc %d\n", $2);
               }
 
@@ -228,7 +230,7 @@ literal_const   : INT_CONST
 			{
 			  float tmp = $1;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign || is_print) {
+              if(is_assign || is_print || is_return) {
                   fprintf(pFile, "\tldc %f\n", tmp);
               }
 			}
@@ -236,7 +238,7 @@ literal_const   : INT_CONST
 			{
 			  float tmp = -$2;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign || is_print) {
+              if(is_assign || is_print || is_return) {
                   fprintf(pFile, "\tldc %f\n", tmp);
               }
 
@@ -246,7 +248,7 @@ literal_const   : INT_CONST
 			  float tmp = $1;
 			  $$ = createConstAttr( REAL_t, &tmp );
               
-              if(is_assign || is_print) {
+              if(is_assign || is_print || is_return) {
                   fprintf(pFile, "\tldc %d\n", $1);
               }
 			}
@@ -254,7 +256,7 @@ literal_const   : INT_CONST
 			{
 			  float tmp = -$2;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign || is_print) {
+              if(is_assign || is_print || is_return) {
                   fprintf(pFile, "\tldc -%d\n", $2);
               }
 
@@ -275,7 +277,7 @@ literal_const   : INT_CONST
 			{
 			  SEMTYPE tmp = __TRUE;
 			  $$ = createConstAttr( BOOLEAN_t, &tmp ); 
-              if(is_assign || is_print) {
+              if(is_assign || is_print || is_return) {
                   fprintf(pFile, "\ticonst_1\n");
               }
 
@@ -284,7 +286,7 @@ literal_const   : INT_CONST
 			{
 			  SEMTYPE tmp = __FALSE;
 			  $$ = createConstAttr( BOOLEAN_t, &tmp );
-              if(is_assign || is_print) {
+              if(is_assign || is_print || is_return) {
                   fprintf(pFile, "\ticonst_0\n");
               }
 
@@ -363,11 +365,15 @@ func_decl   : ID MK_LPAREN
                     break;
                 }
                 fprintf(pFile, ".end method\n\n");
+                localnumber = 0;
 			    funcReturn = 0;
 			}
 			;
 
-opt_param_list		: param_list { $$ = $1; }
+opt_param_list		: param_list 
+            { 
+                $$ = $1; 
+            }
 			| /* epsilon */ { $$ = 0; }
 			;
 
@@ -382,9 +388,11 @@ param_list  : param_list MK_SEMICOLON param
 param       :{param_num = 0;} id_list MK_COLON type 
             { 
                 $$ = createParam( $2, $4 ); 
-                int i;
-                for(i = 0; i < param_num; ++i) {    
-                    switch($4->type) {
+                struct param_sem *ptr;
+                ptr = $$;
+                struct idNode_sem *ptrIdList;
+                for(ptrIdList = ptr->idlist; ptrIdList != 0; ptrIdList = ptrIdList->next) {
+                    switch($$->pType->type) {
                     case INTEGER_t:
                         fprintf(pFile, "I");
                         break;
@@ -462,14 +470,6 @@ compound_stmt:
 			}
 			  BEG
             {
-              /*
-              int i;
-              for(i = scope; i > 0; --i) {
-                tab = '\t';
-              };
-              
-              fprintf("%s'\n" tab);
-              */
               if(is_main == 1) {
                   fprintf(pFile, "\n.method public static main([Ljava/lang/String;)V\n");
                   fprintf(pFile, "\t.limit stack 100\n");
@@ -535,7 +535,6 @@ simple_stmt : var_ref
 				    verifyAssignmentTypeMatch( $1, $4 );
                 
                 
-                
                 //Lab4
                 struct SymNode *node = 0;
                 node = lookupLoopVar(symbolTable, $1->varRef->id);
@@ -548,51 +547,7 @@ simple_stmt : var_ref
                 }
                 
                 if(is_simple && node->category != CONSTANT_t) {
-                    if(node->scope == -1) {
-                /*
-                //if(isAssignmentLHS == __TRUE) {
-                    fprintf(pFile, "getstatic %s/%s ", pro_name, node->name);
-                    
-                    switch(node->type->type) {
-                    case INTEGER_t:
-                        fprintf(pFile, "I\n");
-                        break;
-                    case BOOLEAN_t:
-                        fprintf(pFile, "I\n");
-                        break;
-                    case STRING_t:
-                        //fprintf(pFile, "\tslocal %d ; local variable number %d\n",node->name, node->symLocalNum);
-                        break;
-                    case REAL_t:
-                        fprintf(pFile, "R\n");
-                        break;
-                    default:
-                        fprintf(pFile, "fucking error\n");
-                        break;
-                    }    
-                //} else { 
-                    fprintf(pFile, "putstatic %s/%s ", pro_name, node->name, node->name);
-
-                    switch(node->type->type) {
-                    case INTEGER_t:
-                        fprintf(pFile, "I\n");
-                        break;
-                    case BOOLEAN_t:
-                        fprintf(pFile, "I\n");
-                        break;
-                    case STRING_t:
-                        //fprintf(pFile, "\tslocal %d ; local variable number %d\n",node->name, node->symLocalNum);
-                        break;
-                    case REAL_t:
-                        fprintf(pFile, "R\n");
-                        break;
-                    default:
-                        fprintf(pFile, "fucking error\n");
-                        break;
-                    }
-                //}
-                */
-                    } else if (node->scope > 0) {
+                    if (node->scope > 0) {
                         switch(node->type->type) {
                         case INTEGER_t:
                             fprintf(pFile, "\tistore %d\n", node->symLocalNum);
@@ -666,7 +621,8 @@ simple_stmt : var_ref
 
 proc_call_stmt  : ID MK_LPAREN opt_boolean_expr_list MK_RPAREN MK_SEMICOLON
 			{
-			  verifyFuncInvoke( $1, $3, symbolTable, scope );
+			  fprintf(pFile, "");
+              verifyFuncInvoke( $1, $3, symbolTable, scope );
 			}
 			;
 
@@ -709,9 +665,31 @@ loop_param  : INT_CONST { $$ = $1; }
 			| OP_SUB INT_CONST { $$ = -$2; }
 			;
 
-return_stmt : RETURN boolean_expr MK_SEMICOLON
+return_stmt : RETURN
+            {
+                is_return = 1;
+            }
+              boolean_expr MK_SEMICOLON
 			{
-			  verifyReturnStatement( $2, funcReturn );
+                is_return = 0;
+			    verifyReturnStatement( $3, funcReturn );
+                switch($3->pType->type) {
+                case INTEGER_t:
+                    fprintf(pFile, "\tireturn\n");
+                    break;
+                case BOOLEAN_t:
+                    fprintf(pFile, "\tbreturn\n");
+                    break;
+                case STRING_t:
+                    //fprintf(pFile, "\tslocal %d ; local variable number %d\n",node->name, node->symLocalNum);
+                    break;
+                case REAL_t:
+                    fprintf(pFile, "\tfreturn\n");
+                    break;
+                default:
+                    printf("fucking error\n");
+                    break;
+                }
 			}
 			;
 
@@ -752,6 +730,8 @@ boolean_factor		: OP_NOT boolean_factor
 			{
 			  verifyUnaryNOT( $2 );
 			  $$ = $2;
+              printf("[%d]\n", $2->pType->type);
+              fprintf(pFile, "neg\n");
 			}
 			| relop_expr { $$ = $1; }
 			;
@@ -862,13 +842,37 @@ factor      : var_ref
 			}
 			| ID MK_LPAREN opt_boolean_expr_list MK_RPAREN
 			{
-			  $$ = verifyFuncInvoke( $1, $3, symbolTable, scope );
-			  $$->beginningOp = NONE_t;
+			    $$ = verifyFuncInvoke( $1, $3, symbolTable, scope );
+        	    $$->beginningOp = NONE_t;
+
 			}
 			| OP_SUB ID MK_LPAREN opt_boolean_expr_list MK_RPAREN
 			{
-			  $$ = verifyFuncInvoke( $2, $4, symbolTable, scope );
-			  $$->beginningOp = SUB_t;
+                $$ = verifyFuncInvoke( $2, $4, symbolTable, scope );
+			    $$->beginningOp = SUB_t;
+                struct SymNode *node = 0;
+                node = lookupSymbol( symbolTable, $2, 0, __FALSE );
+
+                              
+                switch(node->type->type) {
+                case INTEGER_t:
+                    fprintf(pFile, "\ti") ;
+                    break;
+                case BOOLEAN_t:
+                    fprintf(pFile, "\tb") ;
+                    break;
+                case STRING_t:
+                    fprintf(pFile, "\tc") ;
+                    break;
+                case REAL_t:
+                    fprintf(pFile, "\tf") ;
+                    break;
+                default:
+                    fprintf(pFile, "fucking error\n");
+                    break;
+                }
+                fprintf(pFile, "neg\n");
+
 			}
             | literal_const
 			{
@@ -892,7 +896,7 @@ var_ref     : ID
               
               struct SymNode *node = 0;               
               node = lookupSymbol( symbolTable, $1, scope, __TRUE);
-              if(is_print||is_assign) {
+              if(is_print||is_assign||is_return) {
                   if(node == 0) {
                       printf("fucking error\n");
                   } else {

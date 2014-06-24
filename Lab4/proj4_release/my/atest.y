@@ -11,13 +11,18 @@
 .method public static fun2()F
 .limit stack 100
 .limit locals 100
+	ldc 10.000000
+	freturn
 	freturn
 .end method
 
 .method public static fun3(II)I
 .limit stack 100
 .limit locals 100
+	iload 0 ; local variable number a
+	iload 1 ; local variable number b
 iadd
+	ireturn
 	ireturn
 .end method
 
@@ -37,11 +42,15 @@ imul
 	ldc 201
 	ldc 17
 idiv
+	invokestatic test5/fun3(II)I
+	ineg
 	invokevirtual java/io/PrintStream/print(I)V
 	getstatic java/lang/System/out Ljava/io/PrintStream;
 	ldc "\n"
 	invokevirtual java/io/PrintStream/print(Ljava/lang/String;)V
 	getstatic java/lang/System/out Ljava/io/PrintStream;
+	invokestatic test5/fun2()F
+	fneg
 	invokevirtual java/io/PrintStream/print(F)V
 	getstatic java/lang/System/out Ljava/io/PrintStream;
 	ldc "\n"
@@ -49,6 +58,9 @@ idiv
 	getstatic java/lang/System/out Ljava/io/PrintStream;
 	ldc 101
 	ldc 2
+	invokestatic test5/fun3(II)I
+	invokestatic test5/fun2()F
+	fneg
 	fstore 1
 	i2f
 	fload 1

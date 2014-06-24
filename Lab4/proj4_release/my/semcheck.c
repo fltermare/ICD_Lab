@@ -11,7 +11,7 @@ extern FILE* pFile;
 extern int is_simple;
 extern char* pro_name;
 extern int localnumber;
-
+extern int is_param;
 void printOperator( OPERATOR op )
 {
 	switch( op ) {
@@ -102,8 +102,8 @@ struct param_sem *createParam( struct idNode_sem *ids, struct PType *pType )
 	result->idlist = ids;
 	result->pType = pType;
 	result->next = 0;
-
-	return result;
+	
+    return result;
 }
 
 struct expr_sem *createExprSem( const char *id ) 
@@ -775,6 +775,44 @@ struct expr_sem *verifyFuncInvoke( const char *id, struct expr_sem *exprList, st
 			}
 		}
 	}
+    fprintf(pFile, "\tinvokestatic %s/%s(",pro_name, node->name);
+    struct PTypeList *ptr;
+    for(ptr = node->attribute->formalParam->params; ptr != 0; ptr = ptr->next){
+        switch(ptr->value->type) { 
+        case INTEGER_t: 
+            fprintf(pFile, "I"); 
+            break; 
+        case BOOLEAN_t: 
+            fprintf(pFile, "B"); 
+            break; 
+        case STRING_t: 
+            //fprintf(pFile, "\tslocal %d ; local variable number %d\n",node->name, node->symLocalNum); 
+            break; 
+        case REAL_t: 
+            fprintf(pFile, "F"); 
+            break; 
+        default: 
+            printf("fucking erorr\n"); 
+            break; 
+        }
+    }
+    switch(node->type->type) { 
+    case INTEGER_t: 
+        fprintf(pFile, ")I\n"); 
+        break; 
+    case BOOLEAN_t: 
+        fprintf(pFile, ")I\n"); 
+        break; 
+    case STRING_t: 
+        //fprintf(pFile, "\tslocal %d ; local variable number %d\n",node->name, node->symLocalNum); 
+        break; 
+    case REAL_t: 
+        fprintf(pFile, ")F\n"); 
+        break; 
+    default: 
+        fprintf(pFile, ")V\n"); 
+        break; 
+    }
 	return result;
 }
 /**
@@ -850,7 +888,15 @@ __BOOLEAN insertParamIntoSymTable( struct SymTable *table, struct param_sem *par
 					if( verifyRedeclaration( table, idPtr->value, scope ) ==__FALSE ) { result = __TRUE;  }
 					else {	// without error, insert into symbol table
 						newNode = createParamNode( idPtr->value, scope, parPtr->pType );
+                        newNode->symLocalNum = localnumber++;
 						insertTab( table, newNode );
+                        //Lab4
+                        printf("[debug]name %s\n", newNode->name);
+                        printf("[debug]scope %d\n", newNode->scope);
+                        printf("[debug]localnumber %d\n", newNode->symLocalNum);
+                        if(newNode->category == PARAMETER_t)
+                            printf("[debug]category PARAMETER_t\n");
+                        //
 					}
 				}
 			}
