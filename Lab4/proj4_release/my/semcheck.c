@@ -892,13 +892,13 @@ __BOOLEAN insertParamIntoSymTable( struct SymTable *table, struct param_sem *par
 						newNode = createParamNode( idPtr->value, scope, parPtr->pType );
                         newNode->symLocalNum = localnumber++;
 						insertTab( table, newNode );
-                        //Lab4
+                        /*/Lab4
                         printf("[debug]name %s\n", newNode->name);
                         printf("[debug]scope %d\n", newNode->scope);
                         printf("[debug]localnumber %d\n", newNode->symLocalNum);
                         if(newNode->category == PARAMETER_t)
                             printf("[debug]category PARAMETER_t\n");
-                        //
+                        */
 					}
 				}
 			}

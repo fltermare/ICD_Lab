@@ -630,6 +630,7 @@ simple_stmt : var_ref
             boolean_expr MK_SEMICOLON 
             { 
                 
+                //if(is_read) printf("in READ\n");
                 is_read = 0;
                 verifyScalarExpr( $3, "read" ); 
             }
@@ -767,6 +768,7 @@ loop_param  : INT_CONST { $$ = $1; }
 return_stmt : RETURN
             {
                 is_return = 1;
+                
             }
               boolean_expr MK_SEMICOLON
 			{
@@ -810,11 +812,12 @@ boolean_expr_list	: boolean_expr_list MK_COMMA boolean_expr
 			;
 
 boolean_expr: boolean_expr OP_OR boolean_term
-			{
+			{ 
+              //if(is_read) printf("is read [boolean op_or]\n");
 			  verifyAndOrOp( $1, OR_t, $3 );
 			  $$ = $1;
 			}
-			| boolean_term { $$ = $1; }
+			| boolean_term { $$ = $1;/* if(is_read) printf("is read [boolean]\n");*/}
 			;
 
 boolean_term: boolean_term OP_AND boolean_factor
@@ -1057,7 +1060,9 @@ factor      : var_ref
 
 var_ref     : ID
 			{
-			    $$ = createExprSem( $1 );
+			    //if(is_read) printf("is read [var_ref]\n");
+
+                $$ = createExprSem( $1 );
               
                 struct SymNode *node = 0;               
                 
@@ -1065,7 +1070,7 @@ var_ref     : ID
                     node = lookupLoopVar( symbolTable, $1);
                 }
                 if(node == 0)
-                    node = lookupSymbol( symbolTable, $1, scope, __TRUE);
+                    node = lookupSymbol( symbolTable, $1, scope, __FALSE);
                 
                 if(is_print || is_assign || is_return || is_condition || is_for || is_while) {
                     
@@ -1098,6 +1103,14 @@ var_ref     : ID
                     }
                 }
                 if(is_read) {
+                   // if(is_read) printf("is read [ID]\n");
+                    
+                    if(node == 0) {
+                        
+                        printf("[var_ref id: read] fucking error\n"); 
+                    
+                    }else {
+                    
                     switch(node->type->type) {
                     case INTEGER_t:
                         fprintf(pFile, "\tinvokevirtual java/util/Scanner/nextInt()I\n");
@@ -1118,6 +1131,8 @@ var_ref     : ID
                     default:
                         fprintf(pFile, "[var_ref type2] fucking error\n");
                         break;
+                    }
+                    
                     }
                 }
 			}
