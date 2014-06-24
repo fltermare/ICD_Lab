@@ -218,7 +218,7 @@ literal_const   : INT_CONST
 			  int tmp = $1;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
               if(is_assign || is_print || is_return || is_condition || is_for || is_while) {
-                  fprintf(pFile, "\tsipush %d\n", tmp);
+                  fprintf(pFile, "\tldc %d\n", tmp);
               }
 			}
 			| OP_SUB INT_CONST
@@ -308,7 +308,7 @@ func_decl_list		: func_decl_list func_decl
 
 func_decl   : ID MK_LPAREN
             {
-                fprintf(pFile, ".method public static %s(", $1);
+                fprintf(pFile, "\n.method public static %s(", $1);
                 is_param = 1; 
             }
               opt_param_list
@@ -369,7 +369,7 @@ func_decl   : ID MK_LPAREN
                     fprintf(pFile, "\treturn\n");
                     break;
                 }
-                fprintf(pFile, ".end method\n\n");
+                fprintf(pFile, ".end method\n");
                 localnumber = 0;
 			    funcReturn = 0;
 			}

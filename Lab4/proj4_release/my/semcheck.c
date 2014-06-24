@@ -851,6 +851,8 @@ void verifyReturnStatement( struct expr_sem *expr, struct PType *funcReturn )
 	}
 	else if( funcReturn->type != expr->pType->type ) {
 		fprintf( stdout, "########## Error at Line#%d: return type mismatch ##########\n", linenum );
+        fprintf(pFile, "\ti2f\n");
+        fprintf(pFile, "\tfreturn\n");
 	}
 	else if( funcReturn->dimNum != expr->pType->dimNum ) {
 		fprintf( stdout, "########## Error at Line#%d: return dimension number mismatch ##########\n", linenum );
