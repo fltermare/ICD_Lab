@@ -728,7 +728,7 @@ for_stmt    : FOR
                 fprintf(pFile, "\tsipush %d\n", $8);
                 fprintf(pFile, "\tisub\n");
                 
-                fprintf(pFile, "\tiflt Ltrue_%d\n", labelLoopNum);
+                fprintf(pFile, "\tifle Ltrue_%d\n", labelLoopNum);
                 fprintf(pFile, "\ticonst_0\n");
                 fprintf(pFile, "\tgoto Lfalse_%d\n", labelLoopNum);
                
