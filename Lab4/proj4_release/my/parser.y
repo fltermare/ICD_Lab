@@ -95,10 +95,17 @@ int is_while = 0;               // in while stmt
 
 program     : ID
 			{
-              pFile = fopen("atest.j", "w");
-              fprintf(pFile, "; %s.j\n", $1);
               pro_name = (char*) malloc(sizeof($1)+1);
               strcpy(pro_name, $1);
+              
+              char* tmp;
+              tmp = (char*) malloc(sizeof($1)+3);
+              strcpy(tmp, $1);
+              strcat(tmp, ".j"); 
+              
+              pFile = fopen(tmp, "w");
+              fprintf(pFile, "; %s.j\n", $1);
+              
               fprintf(pFile, ".class public %s\n", pro_name);
               fprintf(pFile, ".super java/lang/Object\n");
               fprintf(pFile, ".field public static _sc Ljava/util/Scanner;\n");
