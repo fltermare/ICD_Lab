@@ -52,7 +52,8 @@ int is_read = 0;                // is in Read stmt
 int is_param = 0;               // in decl function parameters
 int is_condition = 0;           // in condition stmt
 int is_return = 0;
-int is_for_while = 0;           // in for or while stmt
+int is_for = 0;                 // in for stmt
+int is_while = 0;               // in while stmt
 %}
 
 %union {
@@ -94,7 +95,7 @@ int is_for_while = 0;           // in for or while stmt
 
 program     : ID
 			{
-              pFile = fopen("atest.y", "w");
+              pFile = fopen("atest.j", "w");
               fprintf(pFile, "; %s.j\n", $1);
               pro_name = (char*) malloc(sizeof($1)+1);
               strcpy(pro_name, $1);
@@ -216,8 +217,8 @@ literal_const   : INT_CONST
 			{
 			  int tmp = $1;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
-              if(is_assign || is_print || is_return || is_condition || is_for_while) {
-                  fprintf(pFile, "\tldc %d\n", tmp);
+              if(is_assign || is_print || is_return || is_condition || is_for || is_while) {
+                  fprintf(pFile, "\tsipush %d\n", tmp);
               }
 			}
 			| OP_SUB INT_CONST
@@ -225,7 +226,7 @@ literal_const   : INT_CONST
 			  int tmp = -$2;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
               
-              if(is_assign || is_print || is_return || is_condition || is_for_while) {
+              if(is_assign || is_print || is_return || is_condition || is_for || is_while) {
                   fprintf(pFile, "\tldc %d\n", $2);
               }
 
@@ -234,7 +235,7 @@ literal_const   : INT_CONST
 			{
 			  float tmp = $1;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign || is_print || is_return || is_condition || is_for_while) {
+              if(is_assign || is_print || is_return || is_condition || is_for || is_while) {
                   fprintf(pFile, "\tldc %f\n", tmp);
               }
 			}
@@ -242,7 +243,7 @@ literal_const   : INT_CONST
 			{
 			  float tmp = -$2;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign || is_print || is_return || is_condition || is_for_while) {
+              if(is_assign || is_print || is_return || is_condition || is_for || is_while) {
                   fprintf(pFile, "\tldc %f\n", tmp);
               }
 
@@ -252,7 +253,7 @@ literal_const   : INT_CONST
 			  float tmp = $1;
 			  $$ = createConstAttr( REAL_t, &tmp );
               
-              if(is_assign || is_print || is_return || is_condition || is_for_while) {
+              if(is_assign || is_print || is_return || is_condition || is_for || is_while) {
                   fprintf(pFile, "\tldc %d\n", $1);
               }
 			}
@@ -260,7 +261,7 @@ literal_const   : INT_CONST
 			{
 			  float tmp = -$2;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign || is_print || is_return || is_condition || is_for_while) {
+              if(is_assign || is_print || is_return || is_condition || is_for || is_while) {
                   fprintf(pFile, "\tldc -%d\n", $2);
               }
 
@@ -281,7 +282,7 @@ literal_const   : INT_CONST
 			{
 			  SEMTYPE tmp = __TRUE;
 			  $$ = createConstAttr( BOOLEAN_t, &tmp ); 
-              if(is_assign || is_print || is_return || is_condition || is_for_while) {
+              if(is_assign || is_print || is_return || is_condition || is_for || is_while) {
                   fprintf(pFile, "\ticonst_1\n");
               }
 
@@ -290,7 +291,7 @@ literal_const   : INT_CONST
 			{
 			  SEMTYPE tmp = __FALSE;
 			  $$ = createConstAttr( BOOLEAN_t, &tmp );
-              if(is_assign || is_print || is_return || is_condition || is_for_while) {
+              if(is_assign || is_print || is_return || is_condition || is_for || is_while) {
                   fprintf(pFile, "\ticonst_0\n");
               }
 
@@ -679,8 +680,20 @@ condition   :
             }
 			;
 
-while_stmt  : WHILE condition_while DO
+while_stmt  : WHILE
+            {
+                is_while = 1;
+                fprintf(pFile, "Lbegin_%d:\n", labelLoopNum++);
+            }
+              condition_while
+              DO
 			  opt_stmt_list
+            {
+                is_while = 0;
+                labelLoopNum -= 2;
+                fprintf(pFile, "\tgoto Lbegin_%d\n", labelLoopNum);
+                fprintf(pFile, "Lexit_%d:\n", labelLoopNum);
+            }
 			  END DO
 			;
 
@@ -689,7 +702,7 @@ condition_while		: boolean_expr { verifyBooleanExpr( $1, "while" ); }
 
 for_stmt    : FOR
             {
-                is_for_while = 1;
+                is_for = 1;
             }
               ID 
 			{
@@ -724,25 +737,6 @@ for_stmt    : FOR
                 fprintf(pFile, "\ticonst_1\n");
                 fprintf(pFile, "Lfalse_%d:\n", labelLoopNum++);
                 fprintf(pFile, "\tifeq Lexit_%d\n", labelLoopNum-2);
-                /*
-                switch(newNode->type->type) {
-                case INTEGER_t:
-                    fprintf(pFile, "I\n") ;
-                    break;
-                case BOOLEAN_t:
-                    fprintf(pFile, "Z\n") ;
-                    break;
-                case STRING_t:
-                    fprintf(pFile, "C\n") ;
-                    break;
-                case REAL_t:
-                    fprintf(pFile, "F\n") ;
-                    break;
-                default:
-                    fprintf(pFile, "[decl type] fucking error\n");
-                    break;
-                }  
-                */
 			}
 			  DO
 			  opt_stmt_list
@@ -761,7 +755,7 @@ for_stmt    : FOR
                 fprintf(pFile, "\tgoto Lbegin_%d\n", labelLoopNum);
                 fprintf(pFile, "Lexit_%d:\n", labelLoopNum);
                 
-                is_for_while = 0;
+                is_for = 0;
                 popLoopVar( symbolTable );
 			}
 			;
@@ -1067,13 +1061,13 @@ var_ref     : ID
               
                 struct SymNode *node = 0;               
                 
-                if(is_for_while) {
+                if(is_for) {
                     node = lookupLoopVar( symbolTable, $1);
                 }
                 if(node == 0)
                     node = lookupSymbol( symbolTable, $1, scope, __TRUE);
                 
-                if(is_print || is_assign || is_return || is_condition || is_for_while) {
+                if(is_print || is_assign || is_return || is_condition || is_for || is_while) {
                     
                     if(node == 0) {
                         printf("[var_ref id] fucking error\n");
