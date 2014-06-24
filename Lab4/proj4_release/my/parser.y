@@ -39,6 +39,7 @@ int     localnumber = 0;        // local variable's number
 char    tab[4];                 // how many tabs
 char*   VariType;               // Variable Type
 int     param_num = 0;          // number of function's parameter
+int     label_num = 0;          // number of label
 //Lab4 flags
 int is_main = 0;
 int is_globalVari = 0;
@@ -46,9 +47,10 @@ int is_simple = 0;              // is in simple_stmt
 int is_assign = 0;              // is in assignment
 int is_const = 0;
 int is_print = 0;               // is in Print stmt
+int is_read = 0;                // is in Read stmt
 int is_param = 0;               // in decl function parameters
+int is_condition = 0;           // in condition stmt
 int is_return = 0;
-int is_proc = 0;                // procedure
 %}
 
 %union {
@@ -212,7 +214,7 @@ literal_const   : INT_CONST
 			{
 			  int tmp = $1;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
-              if(is_assign || is_print || is_return) {
+              if(is_assign || is_print || is_return || is_condition) {
                   fprintf(pFile, "\tldc %d\n", tmp);
               }
 			}
@@ -221,7 +223,7 @@ literal_const   : INT_CONST
 			  int tmp = -$2;
 			  $$ = createConstAttr( INTEGER_t, &tmp );
               
-              if(is_assign || is_print || is_return) {
+              if(is_assign || is_print || is_return || is_condition) {
                   fprintf(pFile, "\tldc %d\n", $2);
               }
 
@@ -230,7 +232,7 @@ literal_const   : INT_CONST
 			{
 			  float tmp = $1;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign || is_print || is_return) {
+              if(is_assign || is_print || is_return || is_condition) {
                   fprintf(pFile, "\tldc %f\n", tmp);
               }
 			}
@@ -238,7 +240,7 @@ literal_const   : INT_CONST
 			{
 			  float tmp = -$2;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign || is_print || is_return) {
+              if(is_assign || is_print || is_return || is_condition) {
                   fprintf(pFile, "\tldc %f\n", tmp);
               }
 
@@ -248,7 +250,7 @@ literal_const   : INT_CONST
 			  float tmp = $1;
 			  $$ = createConstAttr( REAL_t, &tmp );
               
-              if(is_assign || is_print || is_return) {
+              if(is_assign || is_print || is_return || is_condition) {
                   fprintf(pFile, "\tldc %d\n", $1);
               }
 			}
@@ -256,7 +258,7 @@ literal_const   : INT_CONST
 			{
 			  float tmp = -$2;
 			  $$ = createConstAttr( REAL_t, &tmp ); 
-              if(is_assign || is_print || is_return) {
+              if(is_assign || is_print || is_return || is_condition) {
                   fprintf(pFile, "\tldc -%d\n", $2);
               }
 
@@ -277,7 +279,7 @@ literal_const   : INT_CONST
 			{
 			  SEMTYPE tmp = __TRUE;
 			  $$ = createConstAttr( BOOLEAN_t, &tmp ); 
-              if(is_assign || is_print || is_return) {
+              if(is_assign || is_print || is_return || is_condition) {
                   fprintf(pFile, "\ticonst_1\n");
               }
 
@@ -286,7 +288,7 @@ literal_const   : INT_CONST
 			{
 			  SEMTYPE tmp = __FALSE;
 			  $$ = createConstAttr( BOOLEAN_t, &tmp );
-              if(is_assign || is_print || is_return) {
+              if(is_assign || is_print || is_return || is_condition) {
                   fprintf(pFile, "\ticonst_0\n");
               }
 
@@ -457,7 +459,7 @@ array_index : INT_CONST { $$ = $1; }
 
 stmt        : compound_stmt
 			| simple_stmt
-			| cond_stmt
+			| cond_stmt 
 			| while_stmt
 			| for_stmt
 			| return_stmt
@@ -616,25 +618,63 @@ simple_stmt : var_ref
                 
                 verifyScalarExpr( $3, "print" ); is_print = 0;
             }
- 			| READ boolean_expr MK_SEMICOLON { verifyScalarExpr( $2, "read" ); }
+ 			| READ
+            {
+                fprintf(pFile, "\t;invoke java.util.Scanner.nextXXX();\n");
+                fprintf(pFile, "\tgetstatic %s/_sc Ljava/util/Scanner;\n", pro_name);
+                is_read = 1;    
+            }
+            boolean_expr MK_SEMICOLON 
+            { 
+                
+                is_read = 0;
+                verifyScalarExpr( $3, "read" ); 
+            }
 			;
 
 proc_call_stmt  : ID MK_LPAREN opt_boolean_expr_list MK_RPAREN MK_SEMICOLON
 			{
-			  fprintf(pFile, "");
-              verifyFuncInvoke( $1, $3, symbolTable, scope );
+			    fprintf(pFile, "");
+                verifyFuncInvoke( $1, $3, symbolTable, scope );
 			}
 			;
 
 cond_stmt   : IF condition THEN
 			  opt_stmt_list
+            {
+                fprintf(pFile, "\tgoto Lexit_%d\n", label_num);
+            }
 			  ELSE
-			  opt_stmt_list
+            {
+                fprintf(pFile, "Lelse_%d:\n", label_num++);
+            }
+              opt_stmt_list
 			  END IF
-			| IF condition THEN opt_stmt_list END IF
+            {
+                fprintf(pFile, "Lexit_%d:\n", --label_num);
+                label_num--;
+            }
+			| IF condition THEN opt_stmt_list
+            {
+                fprintf(pFile, "\tgoto Lexit_%d\n", label_num);
+            }
+              END IF
+            {
+                fprintf(pFile, "Lelse_%d:\n", label_num++);
+                fprintf(pFile, "Lexit_%d:\n", --label_num);
+                label_num--;
+            }
 			;
 
-condition   : boolean_expr { verifyBooleanExpr( $1, "if" ); } 
+condition   :
+            {
+                is_condition = 1;
+            } 
+              boolean_expr
+            { 
+                verifyBooleanExpr( $2, "if" ); 
+                is_condition = 0;
+            }
 			;
 
 while_stmt  : WHILE condition_while DO
@@ -738,8 +778,74 @@ boolean_factor		: OP_NOT boolean_factor
 
 relop_expr  : expr rel_op expr
 			{
-			  verifyRelOp( $1, $2, $3 );
-			  $$ = $1;
+			    verifyRelOp( $1, $2, $3 );
+			    $$ = $1;
+                
+                if($3->pType->type == INTEGER_t)
+                    fprintf(pFile, "\tisub\n\t");
+                else if($3->pType->type == REAL_t)
+                    fprintf(pFile, "\tfcmpl\n\t");
+//aaabbb
+                switch($2) {
+                case LT_t: 
+                    fprintf(pFile, "iflt Ltrue_%d\n", label_num);
+                    fprintf(pFile, "\ticonst_0\n");
+                    fprintf(pFile, "\tgoto Lfalse_%d\n", label_num);
+                    fprintf(pFile, "Ltrue_%d:\n", label_num);
+                    fprintf(pFile, "\ticonst_1\n");
+                    fprintf(pFile, "Lfalse_%d:\n", label_num++);
+                    fprintf(pFile, "\tifeq Lelse_%d\n", label_num);
+                    break;
+                case LE_t: 
+                    fprintf(pFile, "ifle Ltrue_%d\n", label_num);
+                    fprintf(pFile, "\ticonst_0\n");
+                    fprintf(pFile, "\tgoto Lfalse_%d\n", label_num);
+                    fprintf(pFile, "Ltrue_%d:\n", label_num);
+                    fprintf(pFile, "\ticonst_1\n");
+                    fprintf(pFile, "Lfalse_%d:\n", label_num++);
+                    fprintf(pFile, "\tifeq Lelse_%d\n", label_num);
+                    break;
+                case EQ_t: 
+                    fprintf(pFile, "ifeq\n");
+                    fprintf(pFile, "\ticonst_0\n");
+                    fprintf(pFile, "\tgoto Lfalse_%d\n", label_num);
+                    fprintf(pFile, "Ltrue_%d:\n", label_num);
+                    fprintf(pFile, "\ticonst_1\n");
+                    fprintf(pFile, "Lfalse_%d:\n", label_num++);
+                    fprintf(pFile, "\tifeq Lelse_%d\n", label_num);
+                    break;
+                case GE_t: 
+                    fprintf(pFile, "ifge\n");
+                    fprintf(pFile, "\ticonst_0\n");
+                    fprintf(pFile, "\tgoto Lfalse_%d\n", label_num);
+                    fprintf(pFile, "Ltrue_%d:\n", label_num);
+                    fprintf(pFile, "\ticonst_1\n");
+                    fprintf(pFile, "Lfalse_%d:\n", label_num++);
+                    fprintf(pFile, "\tifeq Lelse_%d\n", label_num);
+                    break;
+                case GT_t: 
+                    fprintf(pFile, "ifgt Ltrue_%d\n", label_num);
+                    fprintf(pFile, "\ticonst_0\n");
+                    fprintf(pFile, "\tgoto Lfalse_%d\n", label_num);
+                    fprintf(pFile, "Ltrue_%d:\n", label_num);
+                    fprintf(pFile, "\ticonst_1\n");
+                    fprintf(pFile, "Lfalse_%d:\n", label_num++);
+                    fprintf(pFile, "\tifeq Lelse_%d\n", label_num);
+                    break;
+                case NE_t: 
+                    fprintf(pFile, "ifne\n");
+                    fprintf(pFile, "\ticonst_0\n");
+                    fprintf(pFile, "\tgoto Lfalse_%d\n", label_num);
+                    fprintf(pFile, "Ltrue_%d:\n", label_num);
+                    fprintf(pFile, "\ticonst_1\n");
+                    fprintf(pFile, "Lfalse_%d:\n", label_num++);
+                    fprintf(pFile, "\tifeq Lelse_%d\n", label_num);
+                   break;
+                default:
+                    fprintf(pFile, "fucking error;");
+                    break;
+                }
+                
 			}
 			| expr { $$ = $1; }
 			;
@@ -892,39 +998,62 @@ factor      : var_ref
 
 var_ref     : ID
 			{
-			  $$ = createExprSem( $1 );
+			    $$ = createExprSem( $1 );
               
-              struct SymNode *node = 0;               
-              node = lookupSymbol( symbolTable, $1, scope, __TRUE);
-              if(is_print||is_assign||is_return) {
-                  if(node == 0) {
-                      printf("fucking error\n");
-                  } else {
-                      switch(node->type->type) {
-                      case INTEGER_t:
-                        fprintf(pFile, "\tiload %d ; local variable number %s\n", node->symLocalNum, node->name);
-                        //fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(I)V\n");
-                        break;
-                      case BOOLEAN_t:
-                        fprintf(pFile, "\tiload %d ; local variable number %s\n", node->symLocalNum, node->name) ;
-                        //fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(Z)V\n");
-                        break;
-                      case STRING_t:
-                        fprintf(pFile, "\tldc \"%s\" ; local variable number %s\n", \
-                        node->attribute->constVal->value.stringVal, node->name);
+                struct SymNode *node = 0;               
+                node = lookupSymbol( symbolTable, $1, scope, __TRUE);
+                if(is_print || is_assign || is_return || is_condition) {
+                    if(node == 0) {
+                        printf("fucking error\n");
+                    } else {
+                        switch(node->type->type) {
+                        case INTEGER_t:
+                            fprintf(pFile, "\tiload %d ; local variable number %s\n", node->symLocalNum, node->name);
+                            //fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(I)V\n");
+                            break;
+                        case BOOLEAN_t:
+                            fprintf(pFile, "\tiload %d ; local variable number %s\n", node->symLocalNum, node->name) ;
+                            //fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(Z)V\n");
+                            break;
+                        case STRING_t:
+                            fprintf(pFile, "\tldc \"%s\" ; local variable number %s\n", \
+                            node->attribute->constVal->value.stringVal, node->name);
                         
-                        //fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(Ljava/lang/String;)V\n");
+                            //fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(Ljava/lang/String;)V\n");
+                            break;
+                        case REAL_t:
+                            fprintf(pFile, "\tfload %d ; local variable number %s\n", node->symLocalNum, node->name);
+                            //fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(F)V\n");
+                            break;
+                        default:
+                            fprintf(pFile, "fucking error\n");
+                            break;
+                        }
+                    }
+                }
+                if(is_read) {
+                    switch(node->type->type) {
+                    case INTEGER_t:
+                        fprintf(pFile, "\tinvokevirtual java/util/Scanner/nextInt()I\n");
+                        fprintf(pFile, "\tistore %d\n", node->symLocalNum);
                         break;
-                      case REAL_t:
-                        fprintf(pFile, "\tfload %d ; local variable number %s\n", node->symLocalNum, node->name);
-                        //fprintf(pFile, "\tinvokevirtual java/io/PrintStream/print(F)V\n");
+                    case BOOLEAN_t:
+                        fprintf(pFile, "\tinvokevirtual java/util/Scanner/nextBoolean()Z\n");
+                        fprintf(pFile, "\tistore %d\n", node->symLocalNum);
                         break;
-                      default:
+                    case STRING_t:
+                        fprintf(pFile, "\tinvokevirtual java/util/Scanner/nextString()S\n");
+                        fprintf(pFile, "\tiload %d ; local variable number %s\n", node->symLocalNum, node->name);
+                        break;
+                    case REAL_t:
+                        fprintf(pFile, "\tinvokevirtual java/util/Scanner/nextFloat()F\n");
+                        fprintf(pFile, "\tfstore %d\n", node->symLocalNum);
+                        break;
+                    default:
                         fprintf(pFile, "fucking error\n");
                         break;
-                      }
-                  }
-              }
+                    }
+                }
 			}
 			| var_ref dim
 			{
